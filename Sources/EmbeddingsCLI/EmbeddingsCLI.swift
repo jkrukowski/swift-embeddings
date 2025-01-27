@@ -2,8 +2,8 @@ import ArgumentParser
 import Foundation
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-private extension CommandConfiguration {
-    static let embeddingsCLISupported = CommandConfiguration(
+extension CommandConfiguration {
+    fileprivate static let embeddingsCLISupported = CommandConfiguration(
         abstract: "Encode text using embedding model",
         subcommands: [
             BertCommand.self,
@@ -15,8 +15,8 @@ private extension CommandConfiguration {
     )
 }
 
-private extension CommandConfiguration {
-    static let embeddingsCLIUnsupported = CommandConfiguration(
+extension CommandConfiguration {
+    fileprivate static let embeddingsCLIUnsupported = CommandConfiguration(
         abstract: "Encode text using embedding model (requires macOS 15 or later)",
         subcommands: [
             UnsupportedStub.self

@@ -7,6 +7,7 @@ import XCTest
 @testable import Embeddings
 
 struct BertTests {
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test func pooler() async {
         let pooler1 = Bert.Pooler(
             dense: MLTensorUtils.linear(
@@ -37,6 +38,7 @@ struct BertTests {
         #expect(allClose(data2, [1, 1, 1, 1, 1]) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test func intermediate() async {
         let intermediate1 = Bert.Intermediate(
             dense: MLTensorUtils.linear(
@@ -67,6 +69,7 @@ struct BertTests {
         #expect(allClose(data2, [5.0, 15.0, 14.0, 51.0]) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test func output() async {
         let output1 = Bert.Output(
             dense: MLTensorUtils.linear(
@@ -120,6 +123,7 @@ struct BertTests {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 final class BertEmbeddingTests: XCTestCase {
     // NOTE: this test is not stable when running using `Testing` library, not sure why
     func testEmbeddings() async {

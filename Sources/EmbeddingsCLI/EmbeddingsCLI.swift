@@ -27,7 +27,7 @@ private extension CommandConfiguration {
 @main
 struct EmbeddingsCLI: AsyncParsableCommand {
     static let configuration: CommandConfiguration = {
-        if #available(macOS 15.0, *) {
+        if #available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *) {
             CommandConfiguration.embeddingsCLISupported
         } else {
             CommandConfiguration.embeddingsCLIUnsupported

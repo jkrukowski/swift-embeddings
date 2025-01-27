@@ -2,6 +2,7 @@ import CoreML
 import Numerics
 import Testing
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension MLTensor {
     package func scalars<Scalar>(
         of scalarType: Scalar.Type
@@ -10,6 +11,7 @@ extension MLTensor {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension MLTensor {
     package static func float(shape: [Int]) -> MLTensor {
         let count = shape.reduce(1, *)

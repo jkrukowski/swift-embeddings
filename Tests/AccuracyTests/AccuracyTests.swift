@@ -58,6 +58,7 @@ enum ModelType: String {
 @Suite struct AccuracyTests {
     let cacheDirectory = FileManager.default.temporaryDirectory
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test(
         "Bert Accuracy",
         .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil)
@@ -82,6 +83,7 @@ enum ModelType: String {
         #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test(
         "Clip Accuracy",
         .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil)
@@ -111,6 +113,7 @@ enum ModelType: String {
         #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test(
         "XLM Roberta Accuracy",
         .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil)
@@ -134,6 +137,7 @@ enum ModelType: String {
         #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test(
         "Model2Vec Accuracy",
         .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil)

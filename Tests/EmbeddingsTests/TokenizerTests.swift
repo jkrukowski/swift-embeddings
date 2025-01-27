@@ -3,6 +3,7 @@ import Testing
 
 @testable import Embeddings
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func clipTokenizer() throws {
     let bundleUrl = Bundle.module
         .url(forResource: "merges", withExtension: "txt", subdirectory: "Resources")?

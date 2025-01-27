@@ -5,6 +5,7 @@ import TestingUtils
 
 @testable import MLTensorUtils
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func embeddingLayer1D() async {
     let embedding = embedding(weight: MLTensor.float(shape: [12]))
     let result = embedding(MLTensor([0, 2, 4] as [Int32]))
@@ -14,6 +15,7 @@ import TestingUtils
     #expect(resultArray == [0, 2, 4])
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func embeddingLayer2D() async {
     let embedding = embedding(weight: MLTensor.float(shape: [6, 2]))
     let result = embedding(MLTensor([0, 2, 4] as [Int32]))
@@ -23,6 +25,7 @@ import TestingUtils
     #expect(resultArray == [0, 1, 4, 5, 8, 9])
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func embeddingLayer3D() async {
     let embedding = embedding(weight: MLTensor.float(shape: [2, 2, 2]))
     let result = embedding(MLTensor([0, 1] as [Int32]))
@@ -32,6 +35,7 @@ import TestingUtils
     #expect(resultArray == [0, 1, 2, 3, 4, 5, 6, 7])
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func layerNorm1D() async {
     let weight = MLTensor(
         shape: [3],
@@ -57,6 +61,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func layerNorm2D() async {
     let weight = MLTensor(
         shape: [2, 3],
@@ -82,6 +87,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func layerNorm3D() async {
     let weight = MLTensor(
         shape: [1, 2, 3],

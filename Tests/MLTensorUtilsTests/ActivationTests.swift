@@ -5,6 +5,7 @@ import TestingUtils
 
 @testable import MLTensorUtils
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func erf() async {
     let input1 = MLTensor(shape: [1], scalars: [0], scalarType: Float.self)
     let result1 = await erf(input1).shapedArray(of: Float.self).scalars
@@ -32,6 +33,7 @@ import TestingUtils
     #expect(allClose(result4, expected4) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func gelu() async {
     let input1 = MLTensor(shape: [1], scalars: [0], scalarType: Float.self)
     let result1 = await gelu(input1).shapedArray(of: Float.self).scalars
@@ -54,6 +56,7 @@ import TestingUtils
     #expect(allClose(result4, expected4) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func geluApproximationFast() async {
     let input1 = MLTensor(shape: [1], scalars: [0], scalarType: Float.self)
     let result1 = await gelu(input1, approximation: .fast).shapedArray(of: Float.self).scalars
@@ -76,6 +79,7 @@ import TestingUtils
     #expect(allClose(result4, expected4) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func geluApproximationPrecise() async {
     let input1 = MLTensor(shape: [1], scalars: [0], scalarType: Float.self)
     let result1 = await gelu(input1, approximation: .precise).shapedArray(of: Float.self).scalars

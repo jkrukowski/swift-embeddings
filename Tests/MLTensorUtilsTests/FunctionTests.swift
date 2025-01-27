@@ -5,6 +5,7 @@ import TestingUtils
 
 @testable import MLTensorUtils
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func additiveCasualMask() async {
     let result = additiveCausalMask(3)
 
@@ -14,6 +15,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func norm() async {
     let x = MLTensor(
         shape: [2, 3],
@@ -28,6 +30,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func cosineSimilarity1D() async {
     let x = MLTensor(
         shape: [1, 6],
@@ -47,6 +50,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func cosineSimilarity2D() async {
     let x = MLTensor(
         shape: [2, 3],
@@ -66,6 +70,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func cosineSimilaritySameTensor() async {
     let x = MLTensor(
         shape: [2, 3],
@@ -80,6 +85,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func dotProduct1D() async {
     let x = MLTensor(
         shape: [6],
@@ -99,6 +105,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func dotProduct2D() async {
     let x = MLTensor(
         shape: [2, 2],
@@ -118,6 +125,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func euclideanDistance1D() async {
     let x = MLTensor(
         shape: [6],
@@ -137,6 +145,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func euclideanDistance2D() async {
     let x = MLTensor(
         shape: [2, 2],
@@ -156,6 +165,7 @@ import TestingUtils
     #expect(allClose(resultArray, expectedArray) == true)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 @Test func euclideanDistanceSameTensor() async {
     let x = MLTensor(
         shape: [6],

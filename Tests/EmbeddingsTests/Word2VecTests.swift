@@ -6,6 +6,7 @@ import TestingUtils
 @testable import Embeddings
 
 struct Word2VecTests {
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test func mostSimilar() async {
         let modelBundle = Word2Vec.ModelBundle(
             keyToIndex: ["a": 0, "b": 1, "c": 2, "d": 3],
@@ -25,6 +26,7 @@ struct Word2VecTests {
         #expect(allClose(scores2, [0.9994259]) == true)
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     @Test func encode() async throws {
         let modelBundle = Word2Vec.ModelBundle(
             keyToIndex: ["a": 0, "b": 1, "c": 2, "d": 3],

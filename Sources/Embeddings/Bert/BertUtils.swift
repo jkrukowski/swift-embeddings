@@ -5,12 +5,14 @@ import MLTensorUtils
 import Safetensors
 @preconcurrency import Tokenizers
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public static func loadConfig(at url: URL) throws -> Bert.ModelConfig {
         try loadConfigFromFile(at: url)
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public static func loadModelBundle(
         from hubRepoId: String,
@@ -46,6 +48,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     // NOTE: this is a simple key transformation that is required for the Google BERT weights.
     // Model available here: [google-bert/bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased)
@@ -56,6 +59,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public static func loadModel(
         weightsUrl: URL,

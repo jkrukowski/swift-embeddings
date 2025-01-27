@@ -5,12 +5,14 @@ import MLTensorUtils
 import Safetensors
 @preconcurrency import Tokenizers
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public static func loadConfig(at url: URL) throws -> XLMRoberta.ModelConfig {
         try loadConfigFromFile(at: url)
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public static func loadModelBundle(
         from hubRepoId: String,
@@ -81,6 +83,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public static func loadModel(
         weightsUrl: URL,

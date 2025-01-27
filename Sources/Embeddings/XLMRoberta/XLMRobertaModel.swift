@@ -5,6 +5,7 @@ import MLTensorUtils
 
 public enum XLMRoberta {}
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct ModelConfig: Codable {
         public let hiddenSize: Int
@@ -59,6 +60,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Pooler: Sendable {
         let dense: MLTensorUtils.Layer
@@ -75,6 +77,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Embeddings: Sendable {
         let wordEmbeddings: MLTensorUtils.Layer
@@ -131,6 +134,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Intermediate: Sendable {
         let dense: MLTensorUtils.Layer
@@ -146,6 +150,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct SelfOutput: Sendable {
         let dense: MLTensorUtils.Layer
@@ -170,6 +175,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct SelfAttention: Sendable {
         let query: MLTensorUtils.Layer
@@ -233,6 +239,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Attention: Sendable {
         let selfAttention: XLMRoberta.SelfAttention
@@ -264,6 +271,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Output: Sendable {
         let dense: MLTensorUtils.Layer
@@ -287,6 +295,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Layer: Sendable {
         let attention: XLMRoberta.Attention
@@ -324,6 +333,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Encoder: Sendable {
         let layers: [XLMRoberta.Layer]
@@ -356,6 +366,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct Model: Sendable {
         let embeddings: XLMRoberta.Embeddings
@@ -428,6 +439,7 @@ extension XLMRoberta {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRoberta {
     public struct ModelBundle: Sendable {
         public let model: XLMRoberta.Model

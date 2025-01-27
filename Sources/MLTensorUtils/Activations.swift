@@ -7,6 +7,7 @@ public enum GELUApproximation {
 }
 
 // Ref: https://github.com/ml-explore/mlx-swift/blob/86ad75ab1ee96cd70325732b37cd830f87d7e43f/Source/MLXNN/Activations.swift#L659
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func gelu(_ x: MLTensor, approximation: GELUApproximation? = nil) -> MLTensor {
     switch approximation {
     case .none:
@@ -18,11 +19,13 @@ public func gelu(_ x: MLTensor, approximation: GELUApproximation? = nil) -> MLTe
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func sigmoid(_ x: MLTensor) -> MLTensor {
     1 / (1 + (-x).exp())
 }
 
 // Ref: https://en.wikipedia.org/wiki/Error_function#Numerical_approximations
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func erf(_ x: MLTensor) -> MLTensor {
     let a1: Float = 0.254829592
     let a2: Float = -0.284496736

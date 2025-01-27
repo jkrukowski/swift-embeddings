@@ -1,9 +1,9 @@
 import ArgumentParser
 import Foundation
 
-@main
-struct EmbeddingsCLI: AsyncParsableCommand {
-    static let configuration = CommandConfiguration(
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+private extension CommandConfiguration {
+    static let embeddingsCLISupported = CommandConfiguration(
         abstract: "Encode text using embedding model",
         subcommands: [
             BertCommand.self,
@@ -13,4 +13,31 @@ struct EmbeddingsCLI: AsyncParsableCommand {
             Word2VecCommand.self,
         ]
     )
+}
+
+private extension CommandConfiguration {
+    static let embeddingsCLIUnsupported = CommandConfiguration(
+        abstract: "Encode text using embedding model (requires macOS 15 or later)",
+        subcommands: [
+            UnsupportedStub.self
+        ]
+    )
+}
+
+@main
+struct EmbeddingsCLI: AsyncParsableCommand {
+    static let configuration: CommandConfiguration = {
+        if #available(macOS 15.0, *) {
+            CommandConfiguration.embeddingsCLISupported
+        } else {
+            CommandConfiguration.embeddingsCLIUnsupported
+        }
+    }()
+}
+
+private struct UnsupportedStub: AsyncParsableCommand {
+    func run() async throws {
+        fputs("This command requires macOS 15 or later.\n", stderr)
+        throw ExitCode.failure
+    }
 }

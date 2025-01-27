@@ -3,6 +3,7 @@ import Synchronization
 
 extension Regex: @retroactive @unchecked Sendable {}
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 final class ClipTokenizer: Sendable {
     let bos: String
     let bosToken: Int
@@ -123,6 +124,7 @@ final class ClipTokenizer: Sendable {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension ClipTokenizer: TextTokenizer {
     var unknownTokenId: Int? {
         unkToken
@@ -142,6 +144,7 @@ extension ClipTokenizer: TextTokenizer {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func loadClipTokenizer(at url: URL) throws -> ClipTokenizer {
     let mergesData = try String(
         contentsOf: url.appendingPathComponent("merges.txt"),
@@ -163,10 +166,12 @@ func loadClipTokenizer(at url: URL) throws -> ClipTokenizer {
     return try ClipTokenizer(bpeRanks: bpeRanks, vocab: vocab)
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func uniquePairs(from arr: [String]) -> Set<Pair<String>> {
     Set(zip(arr, arr.dropFirst()).map { Pair($0) })
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func findLowestMergePair(
     in keySet: Set<Pair<String>>,
     using bpeRanks: [Pair<String>: Int]

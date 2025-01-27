@@ -4,6 +4,7 @@ import MLTensorUtils
 
 public enum Word2Vec {}
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Word2Vec {
     public struct ModelBundle: Sendable {
         public let keyToIndex: [String: Int]

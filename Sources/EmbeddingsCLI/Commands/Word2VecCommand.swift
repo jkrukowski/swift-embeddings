@@ -2,6 +2,7 @@ import ArgumentParser
 import Embeddings
 import Foundation
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 struct Word2VecCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "word2vec",

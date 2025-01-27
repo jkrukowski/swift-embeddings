@@ -5,6 +5,7 @@ import MLTensorUtils
 
 public enum Clip {}
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct TextConfig: Codable {
         public var numHiddenLayers: Int
@@ -35,6 +36,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct VisionConfig: Codable {
         public var numHiddenLayers: Int
@@ -68,6 +70,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct ModelConfig: Codable {
         public var textConfig: TextConfig
@@ -86,6 +89,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct Embeddings: Sendable {
         let tokenEmbedding: MLTensorUtils.Layer
@@ -108,6 +112,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct MLP: Sendable {
         let fc1: MLTensorUtils.Layer
@@ -129,6 +134,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct Attention: Sendable {
         let qProj: MLTensorUtils.Layer
@@ -180,6 +186,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct EncoderLayer: Sendable {
         let selfAttnention: Attention
@@ -213,6 +220,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct Encoder: Sendable {
         let layers: [EncoderLayer]
@@ -234,6 +242,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct TextModel: Sendable {
         let embeddings: Embeddings
@@ -268,6 +277,7 @@ extension Clip {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Clip {
     public struct ModelBundle: Sendable {
         public let textModel: Clip.TextModel

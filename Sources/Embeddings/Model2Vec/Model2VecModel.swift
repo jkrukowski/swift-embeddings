@@ -14,6 +14,7 @@ extension Model2Vec {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Model2Vec {
     public struct ModelBundle: Sendable {
         public let model: Model2Vec.Model
@@ -65,6 +66,7 @@ extension Model2Vec {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Model2Vec {
     public struct Model: Sendable {
         public let embeddings: MLTensor

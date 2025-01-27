@@ -5,11 +5,11 @@ import PackageDescription
 let package = Package(
     name: "swift-embeddings",
     platforms: [
-        .macOS(.v15),
-        .iOS(.v18),
-        .tvOS(.v18),
-        .visionOS(.v2),
-        .watchOS(.v11),
+        .macOS(.v14),
+        .iOS(.v17),
+        .tvOS(.v17),
+        .visionOS(.v1),
+        .watchOS(.v10),
     ],
     products: [
         .executable(

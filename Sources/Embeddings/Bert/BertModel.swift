@@ -5,6 +5,7 @@ import MLTensorUtils
 
 public enum Bert {}
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct ModelConfig: Codable {
         public var modelType: String
@@ -50,6 +51,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Pooler: Sendable {
         let dense: MLTensorUtils.Layer
@@ -66,6 +68,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Embeddings: Sendable {
         let wordEmbeddings: MLTensorUtils.Layer
@@ -113,6 +116,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Output: Sendable {
         let dense: MLTensorUtils.Layer
@@ -137,6 +141,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Intermediate: Sendable {
         let dense: MLTensorUtils.Layer
@@ -152,6 +157,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct SelfOutput: Sendable {
         let dense: MLTensorUtils.Layer
@@ -176,6 +182,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct SelfAttention: Sendable {
         let query: MLTensorUtils.Layer
@@ -232,6 +239,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Attention: Sendable {
         let selfAttention: Bert.SelfAttention
@@ -261,6 +269,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Layer: Sendable {
         let attention: Bert.Attention
@@ -296,6 +305,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Encoder: Sendable {
         let layers: [Bert.Layer]
@@ -320,6 +330,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct Model: Sendable {
         let embeddings: Bert.Embeddings
@@ -355,6 +366,7 @@ extension Bert {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension Bert {
     public struct ModelBundle: Sendable {
         public let model: Bert.Model

@@ -2,6 +2,7 @@ import Foundation
 import SentencepieceTokenizer
 import Synchronization
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 final class XLMRobetaTokenizer: Sendable {
     /// TODO: Make `SentencepieceTokenizer` conform to `Sendable`
     private let tokenizer: Mutex<SentencepieceTokenizer>
@@ -92,6 +93,7 @@ final class XLMRobetaTokenizer: Sendable {
     }
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension XLMRobetaTokenizer: TextTokenizer {
     var unknownTokenId: Int? {
         unkTokenId

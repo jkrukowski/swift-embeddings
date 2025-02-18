@@ -38,11 +38,11 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/apple/swift-argument-parser.git",
-            from: "1.5.0"
+            from: "1.4.0"
         ),
         .package(
             url: "https://github.com/jkrukowski/swift-sentencepiece",
-            from: "0.0.5"
+            from: "0.0.6"
         ),
         .package(
             url: "https://github.com/tuist/Command.git",

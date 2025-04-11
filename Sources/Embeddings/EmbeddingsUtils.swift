@@ -104,6 +104,16 @@ extension LoadConfig {
         )
     }
 
+    public static func addWeightKeyPrefix(_ prefix: String) -> LoadConfig {
+        LoadConfig(
+            modelConfig: ModelConfig(
+                weightKeyTransform: { key in
+                    "\(prefix)\(key)"
+                }
+            )
+        )
+    }
+
     public static var staticEmbeddings: LoadConfig {
         LoadConfig(
             modelConfig: ModelConfig(

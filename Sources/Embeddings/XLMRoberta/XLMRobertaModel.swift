@@ -453,7 +453,7 @@ extension XLMRoberta {
             self.tokenizer = tokenizer
         }
 
-        public func encode(_ text: String, maxLength: Int = 128) throws -> MLTensor {
+        public func encode(_ text: String, maxLength: Int = 512) throws -> MLTensor {
             let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
             let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
             let result = model(inputIds: inputIds)
@@ -463,7 +463,7 @@ extension XLMRoberta {
         public func batchEncode(
             _ texts: [String],
             padTokenId: Int = 0,
-            maxLength: Int = 128
+            maxLength: Int = 512
         ) throws -> MLTensor {
             let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
                 texts, padTokenId: padTokenId, maxLength: maxLength)

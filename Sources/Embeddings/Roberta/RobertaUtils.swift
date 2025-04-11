@@ -6,20 +6,20 @@ import Safetensors
 @preconcurrency import Tokenizers
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-extension XLMRoberta {
-    public static func loadConfig(at url: URL) throws -> XLMRoberta.ModelConfig {
+extension Roberta {
+    public static func loadConfig(at url: URL) throws -> Roberta.ModelConfig {
         try loadConfigFromFile(at: url)
     }
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-extension XLMRoberta {
+extension Roberta {
     public static func loadModelBundle(
         from hubRepoId: String,
         downloadBase: URL? = nil,
         useBackgroundSession: Bool = false,
         loadConfig: LoadConfig = LoadConfig()
-    ) async throws -> XLMRoberta.ModelBundle {
+    ) async throws -> Roberta.ModelBundle {
         let modelFolder = try await downloadModelFromHub(
             from: hubRepoId,
             downloadBase: downloadBase,
@@ -34,61 +34,28 @@ extension XLMRoberta {
     public static func loadModelBundle(
         from modelFolder: URL,
         loadConfig: LoadConfig = LoadConfig()
-    ) async throws -> XLMRoberta.ModelBundle {
-        let addedTokens = try await loadAddedTokens(from: modelFolder)
-        let tokenizerModelUrl = try findSentencePieceModel(in: modelFolder)
-        let tokenizer = try XLMRobetaTokenizer(
-            tokenizerModelUrl: tokenizerModelUrl,
-            addedTokens: addedTokens
-        )
+    ) async throws -> Roberta.ModelBundle {
+        let tokenizer = try await AutoTokenizer.from(modelFolder: modelFolder)
         let weightsUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.weightsFileName)
         let configUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.configFileName)
-        let config = try XLMRoberta.loadConfig(at: configUrl)
-        let model = try XLMRoberta.loadModel(
+        let config = try Roberta.loadConfig(at: configUrl)
+        let model = try Roberta.loadModel(
             weightsUrl: weightsUrl,
             config: config,
             loadConfig: loadConfig
         )
-        return XLMRoberta.ModelBundle(model: model, tokenizer: tokenizer)
-    }
-
-    private static func loadAddedTokens(from modelFolder: URL) async throws -> [String: Int] {
-        let hubConfiguration = LanguageModelConfigurationFromHub(modelFolder: modelFolder)
-        let addedTokens = try await hubConfiguration.tokenizerData.addedTokens?.arrayValue?.map {
-            $0.dictionary as [String: Any]
-        }
-        guard let addedTokens else {
-            return [:]
-        }
-        var result = [String: Int]()
-        for addedToken in addedTokens {
-            if let content = addedToken["content"] as? String, let id = addedToken["id"] as? Int {
-                result[content] = id
-            }
-        }
-        return result
-    }
-
-    private static func findSentencePieceModel(in folder: URL) throws -> URL {
-        let fileManager = FileManager.default
-        let contents = try fileManager.contentsOfDirectory(
-            at: folder, includingPropertiesForKeys: nil)
-        for url in contents {
-            if url.pathExtension == "model", url.lastPathComponent.contains("sentencepiece") {
-                return url
-            }
-        }
-        throw EmbeddingsError.fileNotFound
+        return Roberta.ModelBundle(model: model, tokenizer: TokenizerWrapper(tokenizer))
     }
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-extension XLMRoberta {
+extension Roberta {
     public static func loadModel(
         weightsUrl: URL,
-        config: XLMRoberta.ModelConfig,
+        config: Roberta.ModelConfig,
         loadConfig: LoadConfig = LoadConfig()
-    ) throws -> XLMRoberta.Model {
+    ) throws -> Roberta.Model {
+        // NOTE: just `safetensors` support for now
         let safetensors = try Safetensors.read(at: weightsUrl)
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
@@ -114,19 +81,16 @@ extension XLMRoberta {
                     "embeddings.LayerNorm.bias")),
             epsilon: config.layerNormEps)
 
-        let embeddings = XLMRoberta.Embeddings(
+        let embeddings = Roberta.Embeddings(
             wordEmbeddings: wordEmbeddings,
             positionEmbeddings: positionEmbeddings,
             tokenTypeEmbeddings: tokenTypeEmbeddings,
             layerNorm: layerNorm,
-            paddingIndex: Int32(config.padTokenId))
+            paddingIdx: Int32(config.padTokenId))
 
-        var layers = [XLMRoberta.Layer]()
+        var layers = [Roberta.Layer]()
         for layer in 0..<config.numHiddenLayers {
-            let attentionHeadSize = config.hiddenSize / config.numAttentionHeads
-            let allHeadSize =
-                config.numAttentionHeads * attentionHeadSize
-            let bertSelfAttention = try XLMRoberta.SelfAttention(
+            let selfAttention = try Roberta.SelfAttention(
                 query: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
@@ -150,11 +114,11 @@ extension XLMRoberta {
                         forKey: loadConfig.modelConfig.weightKeyTransform(
                             "encoder.layer.\(layer).attention.self.value.bias"))),
                 numAttentionHeads: config.numAttentionHeads,
-                attentionHeadSize: attentionHeadSize,
-                allHeadSize: allHeadSize,
-                scale: 1.0 / sqrtf(Float(allHeadSize))
+                attentionHeadSize: config.hiddenSize / config.numAttentionHeads,
+                allHeadSize: config.numAttentionHeads
+                    * (config.hiddenSize / config.numAttentionHeads)
             )
-            let bertSelfOutput = try XLMRoberta.SelfOutput(
+            let selfOutput = try Roberta.SelfOutput(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
@@ -171,11 +135,11 @@ extension XLMRoberta {
                             "encoder.layer.\(layer).attention.output.LayerNorm.bias")),
                     epsilon: config.layerNormEps)
             )
-            let bertAttention = XLMRoberta.Attention(
-                selfAttention: bertSelfAttention,
-                output: bertSelfOutput
+            let attention = Roberta.Attention(
+                selfAttention: selfAttention,
+                output: selfOutput
             )
-            let bertIntermediate = try XLMRoberta.Intermediate(
+            let intermediate = try Roberta.Intermediate(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
@@ -185,7 +149,7 @@ extension XLMRoberta {
                             "encoder.layer.\(layer).intermediate.dense.bias")
                     ))
             )
-            let bertOutput = try XLMRoberta.Output(
+            let output = try Roberta.Output(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
@@ -203,45 +167,15 @@ extension XLMRoberta {
                             "encoder.layer.\(layer).output.LayerNorm.bias")),
                     epsilon: config.layerNormEps))
 
-            let bertLayer = XLMRoberta.Layer(
-                attention: bertAttention,
-                intermediate: bertIntermediate,
-                output: bertOutput
+            let layer = Roberta.Layer(
+                attention: attention,
+                intermediate: intermediate,
+                output: output
             )
-            layers.append(bertLayer)
+            layers.append(layer)
         }
-        let pooler: XLMRoberta.Pooler? =
-            if let addPoolingLayer = config.addPoolingLayer {
-                if addPoolingLayer {
-                    try XLMRoberta.Pooler(
-                        dense: MLTensorUtils.linear(
-                            weight: safetensors.mlTensor(
-                                forKey: loadConfig.modelConfig.weightKeyTransform(
-                                    "pooler.dense.weight")),
-                            bias: safetensors.mlTensor(
-                                forKey: loadConfig.modelConfig.weightKeyTransform(
-                                    "pooler.dense.bias"))))
-                } else {
-                    nil
-                }
-            } else {
-                // when value is not provided, default to true
-                try XLMRoberta.Pooler(
-                    dense: MLTensorUtils.linear(
-                        weight: safetensors.mlTensor(
-                            forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "pooler.dense.weight")
-                        ),
-                        bias: safetensors.mlTensor(
-                            forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "pooler.dense.bias")))
-                )
-            }
-
-        return XLMRoberta.Model(
+        return Roberta.Model(
             embeddings: embeddings,
-            encoder: XLMRoberta.Encoder(layers: layers),
-            pooler: pooler,
-            numHiddenLayers: config.numHiddenLayers)
+            encoder: Roberta.Encoder(layers: layers))
     }
 }

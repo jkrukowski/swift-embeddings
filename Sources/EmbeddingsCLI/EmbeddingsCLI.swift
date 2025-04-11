@@ -9,9 +9,10 @@ extension CommandConfiguration {
             BertCommand.self,
             ClipCommand.self,
             Model2VecCommand.self,
-            XLMRobertaCommand.self,
+            RobertaCommand.self,
             StaticEmbeddingsCommand.self,
             Word2VecCommand.self,
+            XLMRobertaCommand.self,
         ]
     )
 }

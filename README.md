@@ -22,7 +22,22 @@ NOTE: `google-bert/bert-base-uncased` is supported but `weightKeyTransform` must
 ```swift
 let modelBundle = try await Bert.loadModelBundle(
     from: "google-bert/bert-base-uncased",
-    loadConfig: LoadConfig(weightKeyTransform: Bert.googleWeightsKeyTransform)
+    loadConfig: .googleBert
+)
+```
+
+### RoBERTa (Robustly Optimized BERT Approach)
+
+Some of the supported models on `Hugging Face`:
+
+- [FacebookAI/roberta-base](https://huggingface.co/FacebookAI/roberta-base)
+
+NOTE: Weights in `FacebookAI/roberta-base` must be prefixed with `roberta.`, this has to be provided in the `LoadConfig`:
+
+```swift
+let modelBundle = try await Roberta.loadModelBundle(
+    from: "FacebookAI/roberta-base",
+    loadConfig: .addWeightKeyPrefix("roberta.")
 )
 ```
 
@@ -30,8 +45,18 @@ let modelBundle = try await Bert.loadModelBundle(
 
 Some of the supported models on `Hugging Face`:
 
+- [FacebookAI/xlm-roberta-base](https://huggingface.co/FacebookAI/xlm-roberta-base)
 - [sentence-transformers/paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
 - [tomaarsen/xlm-roberta-base-multilingual-en-ar-fr-de-es-tr-it](https://huggingface.co/tomaarsen/xlm-roberta-base-multilingual-en-ar-fr-de-es-tr-it)
+
+NOTE: Weights in `FacebookAI/xlm-roberta-base` must be prefixed with `roberta.`, this has to be provided in the `LoadConfig`:
+
+```swift
+let modelBundle = try await XLMRoberta.loadModelBundle(
+    from: "FacebookAI/xlm-roberta-base",
+    loadConfig: .addWeightKeyPrefix("roberta.")
+)
+```
 
 ### CLIP (Contrastive Language–Image Pre-training)
 
@@ -147,6 +172,7 @@ Subcommands:
 bert                    Encode text using BERT model
 clip                    Encode text using CLIP model
 model2vec               Encode text using Model2Vec model
+roberta                 Encode text using RoBERTa model
 static-embeddings       Encode text using Static Embeddings model
 xlm-roberta             Encode text using XLMRoberta model
 word2vec                Encode word using Word2Vec model

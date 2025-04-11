@@ -57,25 +57,28 @@ enum ModelType: String {
     case bert
     case clip
     case model2Vec = "model2vec"
+    case roberta
     case staticEmbeddings = "static-embeddings"
     case xlmRoberta = "xlm-roberta"
 }
 
-@Suite struct AccuracyTests {
-    let cacheDirectory = FileManager.default.temporaryDirectory
+@Suite(.enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil))
+struct AccuracyTests {
+    let cacheDirectory: URL =
+        if let modelPath = ProcessInfo.processInfo.environment["MODEL_PATH"] {
+            URL(fileURLWithPath: modelPath)
+        } else {
+            FileManager.default.temporaryDirectory
+        }
 
     @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-    @Test(
-        "Bert Accuracy",
-        .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil),
-        arguments: ["Text to encode", "", "❤️"]
-    )
+    @Test("Bert Accuracy", arguments: ["Text to encode", "", "❤️"])
     func bertAccuracy(_ text: String) async throws {
         let modelId = "google-bert/bert-base-uncased"
         let modelBundle = try await Bert.loadModelBundle(
             from: modelId,
             downloadBase: cacheDirectory,
-            loadConfig: LoadConfig.googleBert
+            loadConfig: .googleBert
         )
         let encoded = try modelBundle.encode(text)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
@@ -90,10 +93,7 @@ enum ModelType: String {
     }
 
     @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-    @Test(
-        "Clip Accuracy",
-        .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil)
-    )
+    @Test("Clip Accuracy")
     func clipAccuracy() async throws {
         let text = "a photo of a dog"
         let modelId = "jkrukowski/clip-vit-base-patch32"
@@ -120,16 +120,34 @@ enum ModelType: String {
     }
 
     @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-    @Test(
-        "XLM Roberta Accuracy",
-        .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil),
-        arguments: ["Text to encode", "", "❤️"]
-    )
+    @Test("Roberta Accuracy", arguments: ["Text to encode", "", "❤️"])
+    func robertaAccuracy(_ text: String) async throws {
+        let modelId = "FacebookAI/roberta-base"
+        let modelBundle = try await Roberta.loadModelBundle(
+            from: modelId,
+            downloadBase: cacheDirectory,
+            loadConfig: .addWeightKeyPrefix("roberta.")
+        )
+        let encoded = try modelBundle.encode(text)
+        let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
+        let modelPath = modelPath(modelId: modelId, cacheDirectory: cacheDirectory)
+        let pythonData = try await generateUsingTransformers(
+            modelPath: modelPath,
+            text: text,
+            modelType: .roberta
+        )
+
+        #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
+    }
+
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+    @Test("XLM Roberta Accuracy", arguments: ["Text to encode", "", "❤️"])
     func xlmRobertaAccuracy(_ text: String) async throws {
-        let modelId = "tomaarsen/xlm-roberta-base-multilingual-en-ar-fr-de-es-tr-it"
+        let modelId = "FacebookAI/xlm-roberta-base"
         let modelBundle = try await XLMRoberta.loadModelBundle(
             from: modelId,
-            downloadBase: cacheDirectory
+            downloadBase: cacheDirectory,
+            loadConfig: .addWeightKeyPrefix("roberta.")
         )
         let encoded = try modelBundle.encode(text)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
@@ -144,11 +162,7 @@ enum ModelType: String {
     }
 
     @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-    @Test(
-        "Model2Vec Accuracy",
-        .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil),
-        arguments: ["Text to encode", "", "❤️"]
-    )
+    @Test("Model2Vec Accuracy", arguments: ["Text to encode", "", "❤️"])
     func model2VecAccuracy(_ text: String) async throws {
         let modelId = "minishlab/potion-base-2M"
         let modelBundle = try await Model2Vec.loadModelBundle(
@@ -168,11 +182,7 @@ enum ModelType: String {
     }
 
     @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-    @Test(
-        "Static Embeddings Accuracy",
-        .enabled(if: ProcessInfo.processInfo.environment["UV_PATH"] != nil),
-        arguments: ["Text to encode", "", "❤️"]
-    )
+    @Test("Static Embeddings Accuracy", arguments: ["Text to encode", "", "❤️"])
     func staticEmbeddingsAccuracy(_ text: String) async throws {
         let modelId = "sentence-transformers/static-retrieval-mrl-en-v1"
         let modelBundle = try await StaticEmbeddings.loadModelBundle(

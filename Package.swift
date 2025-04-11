@@ -30,7 +30,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/huggingface/swift-transformers.git",
-            from: "0.1.14"
+            revision: "41f26a3c892db4bf2253a3dc734973bd6aa3aa43"
         ),
         .package(
             url: "https://github.com/jkrukowski/swift-safetensors.git",

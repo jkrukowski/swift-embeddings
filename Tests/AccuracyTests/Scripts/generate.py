@@ -12,6 +12,7 @@
 import warnings
 from transformers import AutoTokenizer, AutoModel
 from transformers import CLIPModel
+from transformers import logging
 from model2vec import StaticModel
 from sentence_transformers import SentenceTransformer
 import argparse
@@ -46,7 +47,7 @@ def static_embeddings(model_dir, text):
 
 
 def main(model_dir, text, emb_type="bert"):
-    if emb_type == "bert" or emb_type == "xlm-roberta":
+    if emb_type == "bert" or emb_type == "xlm-roberta" or emb_type == "roberta":
         values = embeddings(model_dir, text)
     elif emb_type == "clip":
         values = clip_embeddings(model_dir, text)
@@ -61,6 +62,7 @@ def main(model_dir, text, emb_type="bert"):
 
 # run e.g: `uv run generate.py "./cache/google-bert/bert-base-uncased" "Text to encode"` bert
 if __name__ == "__main__":
+    logging.set_verbosity_error()
     warnings.filterwarnings("ignore")
     parser = argparse.ArgumentParser()
     parser.add_argument("model_dir", type=str, help="Model local dir")

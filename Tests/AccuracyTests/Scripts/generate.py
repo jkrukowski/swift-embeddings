@@ -3,7 +3,7 @@
 # dependencies = [
 #     "torch",
 #     "transformers",
-#     "model2vec",
+#     "model2vec>=0.5.0",
 #     "sentence-transformers",
 # ]
 # ///

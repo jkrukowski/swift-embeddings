@@ -29,7 +29,7 @@ func generateUsingTransformers(
         "Script not found"
     )
     let uvPath = try #require(ProcessInfo.processInfo.environment["UV_PATH"], "UV_PATH not found")
-    let arguments = [uvPath, "run", scriptUrl, modelPath, text, modelType.rawValue]
+    let arguments = [uvPath, "run", "--quiet", scriptUrl, modelPath, text, modelType.rawValue]
     let result =
         try await Command
         .run(arguments: arguments)

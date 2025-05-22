@@ -6,7 +6,7 @@
 Run embedding models locally in `Swift` using `MLTensor`.
 Inspired by [mlx-embeddings](https://github.com/Blaizzy/mlx-embeddings).
 
-## Supported Models Archictectures
+## Supported Models Architectures
 
 ### BERT (Bidirectional Encoder Representations from Transformers)
 
@@ -14,6 +14,7 @@ Some of the supported models on `Hugging Face`:
 
 - [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
 - [sentence-transformers/msmarco-bert-base-dot-v5](https://huggingface.co/sentence-transformers/msmarco-bert-base-dot-v5)
+- [sentence-transformers/LaBSE](https://huggingface.co/sentence-transformers/LaBSE)
 - [thenlper/gte-base](https://huggingface.co/thenlper/gte-base)
 - [google-bert/bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased)
 
@@ -106,7 +107,7 @@ Add the following to your `Package.swift` file. In the package dependencies add:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jkrukowski/swift-embeddings", from: "0.0.7")
+    .package(url: "https://github.com/jkrukowski/swift-embeddings", from: "0.0.16")
 ]
 ```
 

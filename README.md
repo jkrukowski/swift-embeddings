@@ -189,6 +189,22 @@ Command line options:
 -h, --help                                  Show help information.
 ```
 
+## Benchmarks
+
+This project uses [package-benchmark](https://github.com/ordo-one/package-benchmark). To create a new benchmark baseline, run:
+
+```bash
+swift package --disable-sandbox --allow-writing-to-package-directory benchmark baseline update alpha
+```
+
+To compare the current state of your code against a recorded baseline, run:
+
+```bash
+swift package --disable-sandbox benchmark baseline compare alpha
+```
+
+For more info, please refer to [package-benchmark](https://github.com/ordo-one/package-benchmark) docs.
+
 ## Code Formatting
 
 This project uses [swift-format](https://github.com/swiftlang/swift-format). To format the code run:

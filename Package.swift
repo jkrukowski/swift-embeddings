@@ -48,6 +48,10 @@ let package = Package(
             url: "https://github.com/tuist/Command.git",
             from: "0.11.16"
         ),
+        .package(
+            url: "https://github.com/ordo-one/package-benchmark",
+            from: "1.29.3"
+        ),
     ],
     targets: [
         .executableTarget(
@@ -57,6 +61,17 @@ let package = Package(
                 "MLTensorUtils",
                 .product(name: "Safetensors", package: "swift-safetensors"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            ]
+        ),
+        .executableTarget(
+            name: "EmbeddingsBenchmark",
+            dependencies: [
+                "MLTensorUtils",
+                .product(name: "Benchmark", package: "package-benchmark"),
+            ],
+            path: "Benchmarks/EmbeddingsBenchmark",
+            plugins: [
+                .plugin(name: "BenchmarkPlugin", package: "package-benchmark")
             ]
         ),
         .target(

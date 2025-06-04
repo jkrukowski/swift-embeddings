@@ -54,15 +54,15 @@ extension XLMRoberta {
 
     private static func loadAddedTokens(from modelFolder: URL) async throws -> [String: Int] {
         let hubConfiguration = LanguageModelConfigurationFromHub(modelFolder: modelFolder)
-        let addedTokens = try await hubConfiguration.tokenizerData.addedTokens?.arrayValue?.map {
-            $0.dictionary as [String: Any]
+        let addedTokens = try await hubConfiguration.tokenizerData.addedTokens?.array()?.compactMap {
+            $0.dictionary()
         }
         guard let addedTokens else {
             return [:]
         }
         var result = [String: Int]()
         for addedToken in addedTokens {
-            if let content = addedToken["content"] as? String, let id = addedToken["id"] as? Int {
+            if let content = addedToken["content"]?.string(), let id = addedToken["id"]?.integer() {
                 result[content] = id
             }
         }

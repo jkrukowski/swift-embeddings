@@ -1,13 +1,13 @@
 {
-  "originHash" : "fc36dfd6f179ab461085427ae88e94d0dabaef0638a24ec1b6714076469f1481",
+  "originHash" : "81f803d2a6fed974be44b6b0f761651e16931bfd865afa855097707cece280ce",
   "pins" : [
     {
       "identity" : "command",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tuist/Command.git",
       "state" : {
-        "revision" : "6da5edd8893552d45fdafa8545ff7867d17986b4",
-        "version" : "0.11.16"
+        "revision" : "079a7803b581d3022469b3a331bccd51d48d2fc0",
+        "version" : "0.13.0"
       }
     },
     {
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Kolos65/Mockable",
       "state" : {
-        "revision" : "e1b311b01c11415099341eee49769185e965ac4c",
-        "version" : "0.2.0"
+        "revision" : "118a0b8934e585b80952586db30bcb72aef45a74",
+        "version" : "0.3.2"
       }
     },
     {
@@ -150,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-transformers.git",
       "state" : {
-        "revision" : "940a4fac109d7d68817b22382de4894a8ea945c3",
-        "version" : "0.1.20"
+        "revision" : "c2f302a74cca59cbde683b1425ab43c05685515a",
+        "version" : "0.1.21"
       }
     },
     {

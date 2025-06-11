@@ -19,7 +19,6 @@ extension XLMRoberta {
         public let attentionProbsDropoutProb: Float
         public let hiddenDropoutProb: Float
         public let typeVocabSize: Int
-        public let outputPast: Bool
         public let padTokenId: Int
         public let positionEmbeddingType: String
         public let poolingConfig: [String: String]?
@@ -36,7 +35,6 @@ extension XLMRoberta {
             attentionProbsDropoutProb: Float,
             hiddenDropoutProb: Float,
             typeVocabSize: Int,
-            outputPast: Bool,
             padTokenId: Int,
             positionEmbeddingType: String,
             poolingConfig: [String: String]?
@@ -52,7 +50,6 @@ extension XLMRoberta {
             self.attentionProbsDropoutProb = attentionProbsDropoutProb
             self.hiddenDropoutProb = hiddenDropoutProb
             self.typeVocabSize = typeVocabSize
-            self.outputPast = outputPast
             self.padTokenId = padTokenId
             self.positionEmbeddingType = positionEmbeddingType
             self.poolingConfig = poolingConfig

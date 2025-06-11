@@ -47,6 +47,7 @@ let modelBundle = try await Roberta.loadModelBundle(
 Some of the supported models on `Hugging Face`:
 
 - [FacebookAI/xlm-roberta-base](https://huggingface.co/FacebookAI/xlm-roberta-base)
+- [intfloat/multilingual-e5-small](https://huggingface.co/intfloat/multilingual-e5-small)
 - [sentence-transformers/paraphrase-multilingual-mpnet-base-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2)
 - [tomaarsen/xlm-roberta-base-multilingual-en-ar-fr-de-es-tr-it](https://huggingface.co/tomaarsen/xlm-roberta-base-multilingual-en-ar-fr-de-es-tr-it)
 

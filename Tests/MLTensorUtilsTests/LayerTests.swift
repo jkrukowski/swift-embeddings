@@ -112,3 +112,24 @@ import TestingUtils
     let expectedArray: [Float] = [2.7753, 5.0000, 9.6742, 2.1011, 8.0000, 16.3484]
     #expect(allClose(resultArray, expectedArray) == true)
 }
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+@Test func roPE() async {
+    let input = MLTensor(
+        shape: [3, 4],
+        scalars: [1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10],
+        scalarType: Float.self
+    )
+    let roPE = roPE(dims: 4, base: 10_000)
+    let result = roPE(input)
+
+    #expect(result.shape == [3, 4])
+    let resultArray = await result.shapedArray(of: Float.self).scalars
+    let expectedArray: [Float] =
+        [
+            1.0, 2.0, 3.0, 4.0,
+            -2.88762, 4.92975, 6.6077, 7.04965,
+            -11.0967, 7.79841, 2.61976, 10.158,
+        ]
+    #expect(allClose(resultArray, expectedArray) == true)
+}

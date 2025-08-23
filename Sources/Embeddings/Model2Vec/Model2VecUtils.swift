@@ -35,7 +35,10 @@ extension Model2Vec {
         from modelFolder: URL,
         loadConfig: LoadConfig = LoadConfig()
     ) async throws -> Model2Vec.ModelBundle {
-        let tokenizer = try await AutoTokenizer.from(modelFolder: modelFolder)
+        let tokenizer = try await AutoTokenizer.from(
+            modelFolder: modelFolder,
+            tokenizerConfig: loadConfig.tokenizerConfig
+        )
         let weightsUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.weightsFileName)
         let configUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.configFileName)
         let config = try Model2Vec.loadConfig(at: configUrl)

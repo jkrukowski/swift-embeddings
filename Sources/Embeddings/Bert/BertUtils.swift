@@ -35,7 +35,10 @@ extension Bert {
         from modelFolder: URL,
         loadConfig: LoadConfig = LoadConfig()
     ) async throws -> Bert.ModelBundle {
-        let tokenizer = try await AutoTokenizer.from(modelFolder: modelFolder)
+        let tokenizer = try await AutoTokenizer.from(
+            modelFolder: modelFolder,
+            tokenizerConfig: loadConfig.tokenizerConfig
+        )
         let weightsUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.weightsFileName)
         let configUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.configFileName)
         let config = try Bert.loadConfig(at: configUrl)

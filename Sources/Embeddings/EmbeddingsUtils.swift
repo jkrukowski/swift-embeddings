@@ -1,6 +1,43 @@
 import CoreML
 import Foundation
 import Hub
+@preconcurrency import Tokenizers
+
+extension AutoTokenizer {
+    static func from(
+        modelFolder: URL,
+        tokenizerConfig: TokenizerConfig?
+    ) async throws -> any Tokenizer {
+        if let tokenizerConfig {
+            try AutoTokenizer.from(
+                tokenizerConfig: resolveConfig(tokenizerConfig.config, in: modelFolder),
+                tokenizerData: resolveConfig(tokenizerConfig.data, in: modelFolder)
+            )
+        } else {
+            try await AutoTokenizer.from(modelFolder: modelFolder)
+        }
+    }
+}
+
+func resolveConfig(_ tokenizerConfig: TokenizerConfigType, in modelFolder: URL) throws -> Config {
+    switch tokenizerConfig {
+    case .filePath(let filePath):
+        let fileURL = modelFolder.appendingPathComponent(filePath)
+        let data = try loadJSONConfig(at: fileURL)
+        return Config(data as [NSString: Any])
+    case .data(let data):
+        return Config(data as [NSString: Any])
+    }
+}
+
+func loadJSONConfig(at filePath: URL) throws -> [String: Any] {
+    let data = try Data(contentsOf: filePath)
+    let parsedData = try JSONSerialization.jsonObject(with: data, options: [])
+    guard let config = parsedData as? [String: Any] else {
+        throw EmbeddingsError.invalidFile
+    }
+    return config
+}
 
 func downloadModelFromHub(
     from hubRepoId: String,

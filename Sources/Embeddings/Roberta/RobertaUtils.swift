@@ -35,7 +35,10 @@ extension Roberta {
         from modelFolder: URL,
         loadConfig: LoadConfig = LoadConfig()
     ) async throws -> Roberta.ModelBundle {
-        let tokenizer = try await AutoTokenizer.from(modelFolder: modelFolder)
+        let tokenizer = try await AutoTokenizer.from(
+            modelFolder: modelFolder,
+            tokenizerConfig: loadConfig.tokenizerConfig
+        )
         let weightsUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.weightsFileName)
         let configUrl = modelFolder.appendingPathComponent(loadConfig.modelConfig.configFileName)
         let config = try Roberta.loadConfig(at: configUrl)

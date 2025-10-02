@@ -14,7 +14,7 @@ import TestingUtils
  This suite can be run using the following command from the command line:
 
  ```
- PYTORCH_ENABLE_MPS_FALLBACK=1 UV_PATH=$(which uv) swift test --filter AccuracyTests
+ PYTORCH_ENABLE_MPS_FALLBACK=1 UV_PATH=$(which uv) CI_DISABLE_NETWORK_MONITOR=1 swift test --filter AccuracyTests
  ```
 
 */

@@ -1,5 +1,5 @@
 {
-  "originHash" : "805e5db73cce11acc62b4d7eb123a118645408e88cbc6cf52771e21fb7d84ae3",
+  "originHash" : "1bfc895798ae82c4dfa53fa234870f4de8095155e4095cf71892718cc11589ca",
   "pins" : [
     {
       "identity" : "command",
@@ -8,15 +8,6 @@
       "state" : {
         "revision" : "079a7803b581d3022469b3a331bccd51d48d2fc0",
         "version" : "0.13.0"
-      }
-    },
-    {
-      "identity" : "jinja",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/johnmai-dev/Jinja",
-      "state" : {
-        "revision" : "bbddb92fc51ae420b87300298370fd1dfc308f73",
-        "version" : "1.1.1"
       }
     },
     {
@@ -53,6 +44,15 @@
       "state" : {
         "revision" : "671108c96644956dddcd89dd59c203dcdb36cec7",
         "version" : "1.1.4"
+      }
+    },
+    {
+      "identity" : "swift-jinja",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/huggingface/swift-jinja.git",
+      "state" : {
+        "revision" : "c1ef5963ba4a97a589b9c9583ff4ee3352a86d23",
+        "version" : "2.1.0"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-transformers.git",
       "state" : {
-        "revision" : "c2f302a74cca59cbde683b1425ab43c05685515a",
-        "version" : "0.1.21"
+        "revision" : "a2e184dddb4757bc943e77fbe99ac6786c53f0b2",
+        "version" : "1.0.0"
       }
     },
     {

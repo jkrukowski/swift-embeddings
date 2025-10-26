@@ -69,7 +69,8 @@ let package = Package(
             ]
         ),
         .target(
-            name: "MLTensorUtils"),
+            name: "MLTensorUtils"
+        ),
         .target(
             name: "TestingUtils",
             dependencies: [
@@ -92,11 +93,13 @@ let package = Package(
             name: "AccuracyTests",
             dependencies: [
                 "Embeddings",
+                "MLTensorUtils",
                 "TestingUtils",
                 .product(name: "Command", package: "Command"),
             ],
             resources: [
-                .copy("Scripts")
+                .copy("Scripts"),
+                .copy("Data"),
             ]
         ),
         .testTarget(

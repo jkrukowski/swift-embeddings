@@ -1,5 +1,6 @@
 import Command
 import CoreML
+import MLTensorUtils
 import Testing
 import TestingUtils
 
@@ -38,12 +39,7 @@ func generateUsingTransformers(
         result
         .components(separatedBy: .newlines)
         .filter { !$0.isEmpty }
-        .map { stringValue -> Float in
-            guard let value = Float(stringValue) else {
-                fatalError("Invalid float value in stdout: \(stringValue)")
-            }
-            return value
-        }
+        .compactMap { Float($0) }
 }
 
 func modelPath(modelId: String, cacheDirectory: URL) -> String {
@@ -57,6 +53,7 @@ enum ModelType: String {
     case bert
     case clip
     case model2Vec = "model2vec"
+    case modernbert = "modernbert"
     case roberta
     case staticEmbeddings = "static-embeddings"
     case xlmRoberta = "xlm-roberta"
@@ -199,6 +196,45 @@ struct AccuracyTests {
             modelType: .staticEmbeddings
         )
 
+        #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
+    }
+
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+    @Test("ModernBert Base Accuracy", arguments: ["Text to encode", "", "❤️"])
+    func modernBertBaseAccuracy(_ text: String) async throws {
+        let modelId = "answerdotai/ModernBERT-base"
+        let modelBundle = try await ModernBert.loadModelBundle(
+            from: modelId,
+            downloadBase: cacheDirectory,
+            loadConfig: .addWeightKeyPrefix("model.")
+        )
+        let encoded = try modelBundle.encode(text, postProcess: .meanPool)
+        let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
+        let modelPath = modelPath(modelId: modelId, cacheDirectory: cacheDirectory)
+        let pythonData = try await generateUsingTransformers(
+            modelPath: modelPath,
+            text: text,
+            modelType: .modernbert
+        )
+        #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
+    }
+
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+    @Test("ModernBert Nomic Accuracy", arguments: ["Text to encode", "", "❤️"])
+    func modernBertNomicAccuracy(_ text: String) async throws {
+        let modelId = "nomic-ai/modernbert-embed-base"
+        let modelBundle = try await ModernBert.loadModelBundle(
+            from: modelId,
+            downloadBase: cacheDirectory
+        )
+        let encoded = try modelBundle.encode(text, postProcess: .meanPoolAndNormalize)
+        let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
+        let modelPath = modelPath(modelId: modelId, cacheDirectory: cacheDirectory)
+        let pythonData = try await generateUsingTransformers(
+            modelPath: modelPath,
+            text: text,
+            modelType: .modernbert
+        )
         #expect(allClose(pythonData, swiftData, absoluteTolerance: 1e-5) == true)
     }
 }

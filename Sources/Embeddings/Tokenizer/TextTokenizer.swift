@@ -1,5 +1,5 @@
 import Foundation
-@preconcurrency import Tokenizers
+import Tokenizers
 
 public protocol TextTokenizer: Sendable {
     var unknownTokenId: Int? { get }

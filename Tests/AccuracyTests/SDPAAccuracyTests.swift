@@ -78,7 +78,7 @@ struct SDPAAccuracyTests {
             query: query,
             key: key,
             value: value,
-            attntMask: mask,
+            mask: mask,
             scale: testCase.input.scale
         )
         let swiftData = await swiftOutput.cast(to: Float.self).scalars(of: Float.self)

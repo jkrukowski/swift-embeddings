@@ -4,6 +4,11 @@ import CoreML
 public typealias Layer = @Sendable (MLTensor) -> MLTensor
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+public func identity() -> Layer {
+    { $0 }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func embedding(weight: MLTensor) -> Layer {
     { x in
         weight.gathering(atIndices: x, alongAxis: 0)

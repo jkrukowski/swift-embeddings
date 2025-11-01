@@ -27,6 +27,22 @@ let modelBundle = try await Bert.loadModelBundle(
 )
 ```
 
+### ModernBERT
+
+Some of the supported models on `Hugging Face`:
+
+- [answerdotai/ModernBERT-base](https://huggingface.co/answerdotai/ModernBERT-base)
+- [nomic-ai/modernbert-embed-base](https://huggingface.co/nomic-ai/modernbert-embed-base)
+
+NOTE: `answerdotai/ModernBERT-base` is supported but weights must be prefixed with `model.`
+
+```swift
+let modelBundle = try await Bert.loadModelBundle(
+    from: "answerdotai/ModernBERT-base",
+    loadConfig: .addWeightKeyPrefix("model.")
+)
+```
+
 ### RoBERTa (Robustly Optimized BERT Approach)
 
 Some of the supported models on `Hugging Face`:
@@ -172,6 +188,7 @@ Subcommands:
 
 ```bash
 bert                    Encode text using BERT model
+modern-bert             Encode text using ModernBERT model
 clip                    Encode text using CLIP model
 model2vec               Encode text using Model2Vec model
 roberta                 Encode text using RoBERTa model

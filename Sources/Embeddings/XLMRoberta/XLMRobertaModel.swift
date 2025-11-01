@@ -1,7 +1,7 @@
 import CoreML
 import Foundation
 import MLTensorUtils
-@preconcurrency import Tokenizers
+import Tokenizers
 
 public enum XLMRoberta {}
 

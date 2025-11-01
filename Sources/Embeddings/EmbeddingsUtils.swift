@@ -1,7 +1,8 @@
 import CoreML
 import Foundation
 import Hub
-@preconcurrency import Tokenizers
+import Tokenizers
+import MLTensorUtils
 
 extension AutoTokenizer {
     static func from(
@@ -51,6 +52,26 @@ func downloadModelFromHub(
         from: repo,
         matching: globs
     )
+}
+
+public enum PostProcess {
+    case meanPool
+    case meanPoolAndNormalize
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+func processResult(_ result: MLTensor, with postProcess: PostProcess?) -> MLTensor {
+    switch postProcess {
+    case .none:
+        return result[0..., 0, 0...]
+    case .meanPool:
+        let meanPooled = result.mean(alongAxes: 1, keepRank: false)
+        return meanPooled[0, 0...]
+    case .meanPoolAndNormalize:
+        let meanPooled = result.mean(alongAxes: 1, keepRank: false)
+        let normalized = normalizeEmbeddings(meanPooled)
+        return normalized[0, 0...]
+    }
 }
 
 enum EmbeddingsError: Error {

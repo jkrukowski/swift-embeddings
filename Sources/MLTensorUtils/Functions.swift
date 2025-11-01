@@ -8,7 +8,7 @@ public func sdpa(
     query: MLTensor,
     key: MLTensor,
     value: MLTensor,
-    attntMask: MLTensor? = nil,
+    mask: MLTensor? = nil,
     scale: Float? = nil
 ) -> MLTensor {
     precondition(
@@ -31,7 +31,7 @@ public func sdpa(
     let S = key.shape[key.shape.count - 2]
     let queryLastDim = query.shape[query.shape.count - 1]
     let scaleFactor = scale ?? (1.0 / sqrt(Float(queryLastDim)))
-    let attnBias = attntMask ?? MLTensor(repeating: 0.0, shape: [L, S])
+    let attnBias = mask ?? MLTensor(repeating: 0.0, shape: [L, S])
 
     let rank = key.rank
     var permutation = Array(0..<rank)
@@ -48,6 +48,17 @@ public func sdpa(
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func norm(_ x: MLTensor, alongAxes: Int = 1, keepRank: Bool = false) -> MLTensor {
     x.squared().sum(alongAxes: alongAxes, keepRank: keepRank).squareRoot()
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+public func normalizeEmbeddings(
+    _ embeddings: MLTensor,
+    alongAxes: Int = -1,
+    keepRank: Bool = true,
+    eps: Float = 1e-9
+) -> MLTensor {
+    let norm = norm(embeddings, alongAxes: alongAxes, keepRank: keepRank)
+    return embeddings / pointwiseMax(norm, MLTensor(eps))
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)

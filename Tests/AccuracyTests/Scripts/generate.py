@@ -18,6 +18,12 @@ from sentence_transformers import SentenceTransformer
 import argparse
 
 
+def modern_bert(model_dir, text):
+    model = SentenceTransformer(model_dir, truncate_dim=768)
+    output = model.encode(text)
+    return output.flatten().tolist()
+
+
 def embeddings(model_dir, text):
     tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
     model = AutoModel.from_pretrained(model_dir, local_files_only=True)
@@ -49,6 +55,8 @@ def static_embeddings(model_dir, text):
 def main(model_dir, text, emb_type="bert"):
     if emb_type == "bert" or emb_type == "xlm-roberta" or emb_type == "roberta":
         values = embeddings(model_dir, text)
+    elif emb_type == "modernbert":
+        values = modern_bert(model_dir, text)
     elif emb_type == "clip":
         values = clip_embeddings(model_dir, text)
     elif emb_type == "model2vec":
@@ -60,7 +68,7 @@ def main(model_dir, text, emb_type="bert"):
     print("\n".join([str(x) for x in values]))
 
 
-# run e.g: `uv run generate.py "./cache/google-bert/bert-base-uncased" "Text to encode"` bert
+# run e.g: `uv run generate.py "./cache/google-bert/bert-base-uncased" "Text to encode" bert`
 if __name__ == "__main__":
     logging.set_verbosity_error()
     warnings.filterwarnings("ignore")

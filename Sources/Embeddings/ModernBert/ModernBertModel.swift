@@ -28,12 +28,6 @@ extension ModernBert {
         public var attentionBias: Bool
         public var mlpBias: Bool
 
-        // Dropout parameters (optional, training-time only, ignored during inference)
-        public var attentionDropout: Float?
-        public var mlpDropout: Float?
-        public var embeddingDropout: Float?
-        public var classifierDropout: Float?
-
         public init(
             numHiddenLayers: Int = 22,
             numAttentionHeads: Int = 12,
@@ -166,10 +160,8 @@ extension ModernBert {
             var query = qkvSplit[0].squeezingShape(at: 2)
             var key = qkvSplit[1].squeezingShape(at: 2)
             let value = qkvSplit[2].squeezingShape(at: 2)
-
             query = rotaryEmbeddings(query)
             key = rotaryEmbeddings(key)
-
             var attentionOutput = sdpa(
                 query: query,
                 key: key,

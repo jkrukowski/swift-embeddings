@@ -28,6 +28,12 @@ extension ModernBert {
         public var attentionBias: Bool
         public var mlpBias: Bool
 
+        // Dropout parameters (optional, training-time only, ignored during inference)
+        public var attentionDropout: Float?
+        public var mlpDropout: Float?
+        public var embeddingDropout: Float?
+        public var classifierDropout: Float?
+
         public init(
             numHiddenLayers: Int = 22,
             numAttentionHeads: Int = 12,
@@ -160,8 +166,10 @@ extension ModernBert {
             var query = qkvSplit[0].squeezingShape(at: 2)
             var key = qkvSplit[1].squeezingShape(at: 2)
             let value = qkvSplit[2].squeezingShape(at: 2)
+
             query = rotaryEmbeddings(query)
             key = rotaryEmbeddings(key)
+
             var attentionOutput = sdpa(
                 query: query,
                 key: key,
@@ -351,10 +359,12 @@ extension ModernBert {
             maxLength: Int = 8192,
             postProcess: PostProcess? = nil
         ) throws -> MLTensor {
-            let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
-            let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
-            let result = model(inputIds)
-            return processResult(result, with: postProcess)
+            try withMLTensorComputePolicy(.cpuAndGPU) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+                let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
+                let result = model(inputIds)
+                return processResult(result, with: postProcess)
+            }
         }
 
         public func batchEncode(
@@ -363,13 +373,15 @@ extension ModernBert {
             maxLength: Int = 8192,
             postProcess: PostProcess? = nil
         ) throws -> MLTensor {
-            let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
-                texts, padTokenId: padTokenId, maxLength: maxLength)
-            let inputIds = MLTensor(
-                shape: [encodedTexts.count, encodedTexts[0].count],
-                scalars: encodedTexts.flatMap { $0 })
-            let result = model(inputIds)
-            return processResult(result, with: postProcess)
+            try withMLTensorComputePolicy(.cpuAndGPU) {
+                let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
+                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                let inputIds = MLTensor(
+                    shape: [encodedTexts.count, encodedTexts[0].count],
+                    scalars: encodedTexts.flatMap { $0 })
+                let result = model(inputIds)
+                return processResult(result, with: postProcess)
+            }
         }
     }
 }

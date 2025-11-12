@@ -351,10 +351,12 @@ extension ModernBert {
             maxLength: Int = 8192,
             postProcess: PostProcess? = nil
         ) throws -> MLTensor {
-            let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
-            let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
-            let result = model(inputIds)
-            return processResult(result, with: postProcess)
+            try withMLTensorComputePolicy(.cpuAndGPU) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+                let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
+                let result = model(inputIds)
+                return processResult(result, with: postProcess)
+            }
         }
 
         public func batchEncode(
@@ -363,13 +365,15 @@ extension ModernBert {
             maxLength: Int = 8192,
             postProcess: PostProcess? = nil
         ) throws -> MLTensor {
-            let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
-                texts, padTokenId: padTokenId, maxLength: maxLength)
-            let inputIds = MLTensor(
-                shape: [encodedTexts.count, encodedTexts[0].count],
-                scalars: encodedTexts.flatMap { $0 })
-            let result = model(inputIds)
-            return processResult(result, with: postProcess)
+            try withMLTensorComputePolicy(.cpuAndGPU) {
+                let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
+                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                let inputIds = MLTensor(
+                    shape: [encodedTexts.count, encodedTexts[0].count],
+                    scalars: encodedTexts.flatMap { $0 })
+                let result = model(inputIds)
+                return processResult(result, with: postProcess)
+            }
         }
     }
 }

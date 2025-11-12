@@ -1,8 +1,8 @@
 import CoreML
 import Foundation
 import Hub
-import Tokenizers
 import MLTensorUtils
+import Tokenizers
 
 extension AutoTokenizer {
     static func from(

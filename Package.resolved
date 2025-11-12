@@ -1,5 +1,5 @@
 {
-  "originHash" : "1bfc895798ae82c4dfa53fa234870f4de8095155e4095cf71892718cc11589ca",
+  "originHash" : "62e8257981c8ce7f1ecb88e27432f73bdf56364ef910d860809ecd9b365b46d3",
   "pins" : [
     {
       "identity" : "command",
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/huggingface/swift-transformers.git",
       "state" : {
-        "revision" : "94610577e4af9bbc267060af1e25e977604dd796",
-        "version" : "1.1.1"
+        "revision" : "d363e83a77bafe144808a3d01556139fe67cd8bc",
+        "version" : "1.1.2"
       }
     },
     {

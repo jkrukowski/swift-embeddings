@@ -32,7 +32,7 @@ package func allClose<T: Numeric>(
     relativeTolerance: T.Magnitude = T.Magnitude.ulpOfOne.squareRoot()
 ) -> Bool where T.Magnitude: FloatingPoint {
     guard lhs.count == rhs.count else {
-        Issue.record("Expected \(lhs) to be approximately equal to \(rhs), but sizes differ")
+        Issue.record("Sizes differ: \(lhs.count) vs. \(rhs.count)")
         return false
     }
     for (l, r) in zip(lhs, rhs) {

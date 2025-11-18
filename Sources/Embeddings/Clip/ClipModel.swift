@@ -304,11 +304,11 @@ extension Clip {
             padTokenId: Int = 0,
             maxLength: Int = 77
         ) throws -> MLTensor {
-            let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
+            let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                 texts, padTokenId: padTokenId, maxLength: maxLength)
             let inputIds = MLTensor(
-                shape: [encodedTexts.count, encodedTexts[0].count],
-                scalars: encodedTexts.flatMap { $0 })
+                shape: batchTokenizeResult.shape,
+                scalars: batchTokenizeResult.tokens)
             let modelOutput = textModel(inputIds: inputIds)
             let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
             return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)

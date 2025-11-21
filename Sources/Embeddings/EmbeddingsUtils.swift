@@ -40,6 +40,7 @@ func loadJSONConfig(at filePath: URL) throws -> [String: Any] {
     return config
 }
 
+@discardableResult
 func downloadModelFromHub(
     from hubRepoId: String,
     downloadBase: URL? = nil,
@@ -60,18 +61,40 @@ public enum PostProcess {
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
-func processResult(_ result: MLTensor, with postProcess: PostProcess?) -> MLTensor {
+func processResult(
+    _ result: MLTensor, with postProcess: PostProcess?, attentionMask: MLTensor? = nil
+) -> MLTensor {
     switch postProcess {
     case .none:
-        return result[0..., 0, 0...]
+        return result
     case .meanPool:
-        let meanPooled = result.mean(alongAxes: 1, keepRank: false)
-        return meanPooled[0, 0...]
+        let pooled: MLTensor =
+            if let attentionMask {
+                maskedMeanPool(result, attentionMask: attentionMask)
+            } else {
+                result.mean(alongAxes: 1, keepRank: false)
+            }
+        return pooled
     case .meanPoolAndNormalize:
-        let meanPooled = result.mean(alongAxes: 1, keepRank: false)
-        let normalized = normalizeEmbeddings(meanPooled)
-        return normalized[0, 0...]
+        let pooled: MLTensor =
+            if let attentionMask {
+                maskedMeanPool(result, attentionMask: attentionMask)
+            } else {
+                result.mean(alongAxes: 1, keepRank: false)
+            }
+        return normalizeEmbeddings(pooled)
     }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+func maskedMeanPool(_ tensor: MLTensor, attentionMask: MLTensor) -> MLTensor {
+    // tensor shape: [batch, seq_len, hidden_dim], attentionMask shape: [batch, seq_len]
+    // Expand attention mask to match tensor dimensions: [batch, seq_len, 1]
+    let expandedMask = attentionMask.expandingShape(at: 2)
+    let maskedTensor = tensor * expandedMask
+    let sumPooled = maskedTensor.sum(alongAxes: 1, keepRank: false)
+    let tokenCounts = attentionMask.sum(alongAxes: 1, keepRank: true)
+    return sumPooled / tokenCounts
 }
 
 enum EmbeddingsError: Error {

@@ -7,13 +7,15 @@ public protocol TextTokenizer: Sendable {
     func tokenizeText(_ text: String) throws -> [Int32]
     func tokenizeText(_ text: String, maxLength: Int?) throws -> [Int32]
     func tokenizeText(_ text: String, maxLength: Int?, addSpecialTokens: Bool) throws -> [Int32]
-    func tokenizeTextsPaddingToLongest(_ texts: [String], padTokenId: Int) throws -> [[Int32]]
+    func tokenizeTextsPaddingToLongest(
+        _ texts: [String], padTokenId: Int
+    ) throws -> BatchTokenizeResult
     func tokenizeTextsPaddingToLongest(
         _ texts: [String], padTokenId: Int, maxLength: Int?
-    ) throws -> [[Int32]]
+    ) throws -> BatchTokenizeResult
     func tokenizeTextsPaddingToLongest(
         _ texts: [String], padTokenId: Int, maxLength: Int?, addSpecialTokens: Bool
-    ) throws -> [[Int32]]
+    ) throws -> BatchTokenizeResult
 }
 
 extension TextTokenizer {
@@ -28,7 +30,7 @@ extension TextTokenizer {
     public func tokenizeTextsPaddingToLongest(
         _ texts: [String],
         padTokenId: Int
-    ) throws -> [[Int32]] {
+    ) throws -> BatchTokenizeResult {
         try tokenizeTextsPaddingToLongest(
             texts, padTokenId: padTokenId, maxLength: nil, addSpecialTokens: true)
     }
@@ -37,7 +39,7 @@ extension TextTokenizer {
         _ texts: [String],
         padTokenId: Int,
         maxLength: Int?
-    ) throws -> [[Int32]] {
+    ) throws -> BatchTokenizeResult {
         try tokenizeTextsPaddingToLongest(
             texts, padTokenId: padTokenId, maxLength: maxLength, addSpecialTokens: true)
     }
@@ -47,10 +49,10 @@ extension TextTokenizer {
         padTokenId: Int,
         maxLength: Int?,
         addSpecialTokens: Bool
-    ) throws -> [[Int32]] {
+    ) throws -> BatchTokenizeResult {
         var longest = 0
-        var result = [[Int32]]()
-        result.reserveCapacity(texts.count)
+        var tokenizedTexts = [[Int32]]()
+        tokenizedTexts.reserveCapacity(texts.count)
         for text in texts {
             let encoded = try tokenizeText(
                 text,
@@ -58,15 +60,39 @@ extension TextTokenizer {
                 addSpecialTokens: addSpecialTokens
             )
             longest = max(longest, encoded.count)
-            result.append(encoded)
+            tokenizedTexts.append(encoded)
         }
-        return result.map {
-            if $0.count < longest {
-                return $0 + Array(repeating: Int32(padTokenId), count: longest - $0.count)
-            } else {
-                return $0
+        var tokens = [Int32]()
+        tokens.reserveCapacity(longest * tokenizedTexts.count)
+        var attentionMask = [Float]()
+        attentionMask.reserveCapacity(longest * tokenizedTexts.count)
+        for item in tokenizedTexts {
+            tokens.append(contentsOf: item)
+            attentionMask.append(contentsOf: Array(repeating: 1.0, count: item.count))
+            if item.count < longest {
+                tokens.append(
+                    contentsOf: Array(repeating: Int32(padTokenId), count: longest - item.count))
+                attentionMask.append(
+                    contentsOf: Array(repeating: 0.0, count: longest - item.count))
             }
         }
+        return BatchTokenizeResult(
+            tokens: tokens,
+            attentionMask: attentionMask,
+            shape: [tokenizedTexts.count, longest]
+        )
+    }
+}
+
+public struct BatchTokenizeResult {
+    public let tokens: [Int32]
+    public let attentionMask: [Float]
+    public let shape: [Int]
+
+    public init(tokens: [Int32], attentionMask: [Float], shape: [Int]) {
+        self.tokens = tokens
+        self.attentionMask = attentionMask
+        self.shape = shape
     }
 }
 

@@ -366,13 +366,16 @@ extension ModernBert {
             postProcess: PostProcess? = nil
         ) throws -> MLTensor {
             try withMLTensorComputePolicy(.cpuAndGPU) {
-                let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
+                let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(
-                    shape: [encodedTexts.count, encodedTexts[0].count],
-                    scalars: encodedTexts.flatMap { $0 })
-                let result = model(inputIds)
-                return processResult(result, with: postProcess)
+                    shape: batchTokenizeResult.shape,
+                    scalars: batchTokenizeResult.tokens)
+                let attentionMask = MLTensor(
+                    shape: batchTokenizeResult.shape,
+                    scalars: batchTokenizeResult.attentionMask)
+                let result = model(inputIds, attentionMask: attentionMask)
+                return processResult(result, with: postProcess, attentionMask: attentionMask)
             }
         }
     }

@@ -395,12 +395,18 @@ extension Bert {
             padTokenId: Int = 0,
             maxLength: Int = 512
         ) throws -> MLTensor {
-            let encodedTexts = try tokenizer.tokenizeTextsPaddingToLongest(
+            let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                 texts, padTokenId: padTokenId, maxLength: maxLength)
             let inputIds = MLTensor(
-                shape: [encodedTexts.count, encodedTexts[0].count],
-                scalars: encodedTexts.flatMap { $0 })
-            return model(inputIds: inputIds).sequenceOutput[0..., 0, 0...]
+                shape: batchTokenizeResult.shape,
+                scalars: batchTokenizeResult.tokens)
+            let attentionMask = MLTensor(
+                shape: batchTokenizeResult.shape,
+                scalars: batchTokenizeResult.attentionMask)
+            return model(
+                inputIds: inputIds,
+                attentionMask: attentionMask
+            ).sequenceOutput[0..., 0, 0...]
         }
     }
 }

@@ -24,6 +24,11 @@ public func sigmoid(_ x: MLTensor) -> MLTensor {
     1 / (1 + (-x).exp())
 }
 
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+public func silu(_ x: MLTensor) -> MLTensor {
+    x * sigmoid(x)
+}
+
 // Ref: https://en.wikipedia.org/wiki/Error_function#Numerical_approximations
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func erf(_ x: MLTensor) -> MLTensor {

@@ -61,6 +61,11 @@ def static_embeddings(model_dir, text):
     output = model.encode(text, normalize_embeddings=True)
     return output.flatten().tolist()
 
+def nomic_embeddings(model_dir, text):
+    model = SentenceTransformer(model_dir, truncate_dim=768)
+    output = model.encode(text, normalize_embeddings=False)
+    return output.flatten().tolist()
+
 
 def main(model_dir, text, emb_type="bert"):
     if emb_type == "bert" or emb_type == "xlm-roberta" or emb_type == "roberta":
@@ -73,6 +78,8 @@ def main(model_dir, text, emb_type="bert"):
         values = model2vec_embeddings(model_dir, text)
     elif emb_type == "static-embeddings":
         values = static_embeddings(model_dir, text)
+    elif emb_type == "nomic":
+        values = nomic_embeddings(model_dir, text)
     else:
         raise ValueError(f"Unknown emb_type: {emb_type}")
     print("\n".join([str(x) for x in values]))

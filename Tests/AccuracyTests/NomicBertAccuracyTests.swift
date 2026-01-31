@@ -17,7 +17,11 @@ struct NomicBertAccuracyTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.encode(text, postProcess: .meanPool)
+        let encoded = try modelBundle.encode(
+            text,
+            postProcess: .meanPool,
+            computePolicy: .cpuOnly
+        )
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
             modelId: Utils.ModelId.nomicEmbedTextV15, cacheDirectory: Utils.modelPath)
@@ -37,7 +41,11 @@ struct NomicBertAccuracyTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests, postProcess: .meanPool)
+        let encoded = try modelBundle.batchEncode(
+            Utils.batchTextsToTests,
+            postProcess: .meanPool,
+            computePolicy: .cpuOnly
+        )
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
             modelId: Utils.ModelId.nomicEmbedTextV15, cacheDirectory: Utils.modelPath)

@@ -74,6 +74,9 @@ extension NomicBert {
         }
 
         let safetensors = try Safetensors.read(at: weightsUrl)
+        func tensor(_ key: String) -> MLTensor? {
+            try? safetensors.mlTensor(forKey: loadConfig.modelConfig.weightKeyTransform(key))
+        }
 
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
@@ -112,7 +115,7 @@ extension NomicBert {
         let ropeDim = (rotaryDim / 2) * 2
         let rotaryEmbeddings: MLTensorUtils.Layer? =
             if ropeDim > 0 {
-                MLTensorUtils.roPE(dims: ropeDim, base: Int(config.rotaryEmbBase))
+                nomicRoPE(dims: ropeDim, base: Int(config.rotaryEmbBase))
             } else {
                 nil
             }
@@ -138,7 +141,7 @@ extension NomicBert {
                 forKey: loadConfig.modelConfig.weightKeyTransform(
                     "encoder.layers.\(layerId).attn.out_proj.weight"))
             let wo: MLTensorUtils.Layer =
-                if config.useBias {
+                if config.qkvProjBias {
                     try MLTensorUtils.linear(
                         weight: woWeight,
                         bias: safetensors.mlTensor(
@@ -175,23 +178,45 @@ extension NomicBert {
                         "encoder.layers.\(layerId).norm2.bias")),
                 epsilon: config.layerNormEpsilon)
 
-            let gateUpWeight = try safetensors.mlTensor(
+            let gateUpBias: MLTensor? =
+                if config.mlpFc1Bias {
+                    tensor("encoder.layers.\(layerId).mlp.gate_up_proj.bias")
+                } else {
+                    nil
+                }
+            let gateUpWeightResolved: MLTensor
+            let gateUpBiasResolved: MLTensor?
+            if let combined = try? safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
                     "encoder.layers.\(layerId).mlp.gate_up_proj.weight"))
+            {
+                gateUpWeightResolved = combined
+                gateUpBiasResolved = gateUpBias
+            } else {
+                guard
+                    let fc11 = tensor("encoder.layers.\(layerId).mlp.fc11.weight"),
+                    let fc12 = tensor("encoder.layers.\(layerId).mlp.fc12.weight")
+                else {
+                    throw EmbeddingsError.invalidFile
+                }
+                gateUpWeightResolved = MLTensor(concatenating: [fc12, fc11], alongAxis: 0)
+                gateUpBiasResolved = nil
+            }
             let gateUp: MLTensorUtils.Layer =
-                if config.mlpFc1Bias {
-                    try MLTensorUtils.linear(
-                        weight: gateUpWeight,
-                        bias: safetensors.mlTensor(
-                            forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "encoder.layers.\(layerId).mlp.gate_up_proj.bias")))
+                if let gateUpBiasResolved {
+                    MLTensorUtils.linear(weight: gateUpWeightResolved, bias: gateUpBiasResolved)
                 } else {
-                    MLTensorUtils.linear(weight: gateUpWeight)
+                    MLTensorUtils.linear(weight: gateUpWeightResolved)
                 }
 
-            let downWeight = try safetensors.mlTensor(
-                forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).mlp.down_proj.weight"))
+            let downWeight: MLTensor
+            if let weight = tensor("encoder.layers.\(layerId).mlp.down_proj.weight") {
+                downWeight = weight
+            } else if let weight = tensor("encoder.layers.\(layerId).mlp.fc2.weight") {
+                downWeight = weight
+            } else {
+                throw EmbeddingsError.invalidFile
+            }
             let down: MLTensorUtils.Layer =
                 if config.mlpFc2Bias {
                     try MLTensorUtils.linear(
@@ -224,5 +249,48 @@ extension NomicBert {
             layers: layers,
             prenorm: config.prenorm
         )
+    }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+private func nomicRoPE(dims: Int, base: Int) -> MLTensorUtils.Layer {
+    { x in
+        let shape = x.shape
+        let x = x.reshaped(to: [-1, shape[shape.count - 2], shape[shape.count - 1]])
+        let n = x.shape[1]
+        let (cosTheta, sinTheta) = nomicCosSinTheta(n: n, dims: dims, base: Float(base))
+        let rope = nomicApplyRoPE(cosTheta: cosTheta, sinTheta: sinTheta, x: x, dims: dims)
+        return rope.reshaped(to: shape)
+    }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+private func nomicCosSinTheta(
+    n: Int,
+    dims: Int,
+    base: Float
+) -> (cos: MLTensor, sin: MLTensor) {
+    let halfDims = Float(dims / 2)
+    let positions = MLTensor(rangeFrom: Float(0), to: Float(n), by: 1)
+    let freqs = (-MLTensor(rangeFrom: Float(0), to: halfDims, by: 1) * (log(base) / Float(dims))).exp()
+    let theta = positions.reshaped(to: [-1, 1]) * freqs.reshaped(to: [1, -1])
+    return (theta.cos(), theta.sin())
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+private func nomicApplyRoPE(
+    cosTheta: MLTensor,
+    sinTheta: MLTensor,
+    x: MLTensor,
+    dims: Int
+) -> MLTensor {
+    let x1 = x[..., 0..<(dims / 2)]
+    let x2 = x[..., (dims / 2)..<dims]
+    let rx1 = x1 * cosTheta - x2 * sinTheta
+    let rx2 = x1 * sinTheta + x2 * cosTheta
+    if dims < x.shape[x.shape.count - 1] {
+        return MLTensor(concatenating: [rx1, rx2, x[..., dims...]], alongAxis: -1)
+    } else {
+        return MLTensor(concatenating: [rx1, rx2], alongAxis: -1)
     }
 }

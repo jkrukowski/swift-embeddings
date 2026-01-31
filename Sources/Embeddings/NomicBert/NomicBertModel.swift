@@ -7,6 +7,11 @@ public enum NomicBert {}
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension NomicBert {
+    public enum ComputePolicy: Sendable {
+        case cpuOnly
+        case cpuAndGPU
+    }
+
     public struct ModelConfig: Codable, Sendable {
         public var modelType: String
         public var nEmbd: Int
@@ -31,6 +36,34 @@ extension NomicBert {
         public var padTokenId: Int?
         public var bosTokenId: Int?
         public var eosTokenId: Int?
+
+        public init(from decoder: Swift.Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            modelType = try container.decodeIfPresent(String.self, forKey: .modelType) ?? "nomic_bert"
+            nEmbd = try container.decodeIfPresent(Int.self, forKey: .nEmbd) ?? 768
+            nHead = try container.decodeIfPresent(Int.self, forKey: .nHead) ?? 12
+            nLayer = try container.decodeIfPresent(Int.self, forKey: .nLayer) ?? 12
+            nInner = try container.decodeIfPresent(Int.self, forKey: .nInner)
+            nPositions = try container.decodeIfPresent(Int.self, forKey: .nPositions) ?? 2048
+            vocabSize = try container.decodeIfPresent(Int.self, forKey: .vocabSize) ?? 30522
+            typeVocabSize = try container.decodeIfPresent(Int.self, forKey: .typeVocabSize) ?? 2
+            layerNormEpsilon = try container.decodeIfPresent(Float.self, forKey: .layerNormEpsilon) ?? 1e-12
+            rotaryEmbBase = try container.decodeIfPresent(Float.self, forKey: .rotaryEmbBase) ?? 10_000
+            rotaryEmbFraction = try container.decodeIfPresent(Float.self, forKey: .rotaryEmbFraction) ?? 1.0
+            rotaryEmbInterleaved = try container.decodeIfPresent(Bool.self, forKey: .rotaryEmbInterleaved) ?? false
+            qkvProjBias = try container.decodeIfPresent(Bool.self, forKey: .qkvProjBias) ?? false
+            mlpFc1Bias = try container.decodeIfPresent(Bool.self, forKey: .mlpFc1Bias) ?? false
+            mlpFc2Bias = try container.decodeIfPresent(Bool.self, forKey: .mlpFc2Bias) ?? false
+            useBias = try container.decodeIfPresent(Bool.self, forKey: .useBias) ?? false
+            prenorm = try container.decodeIfPresent(Bool.self, forKey: .prenorm) ?? false
+            useRmsNorm = try container.decodeIfPresent(Bool.self, forKey: .useRmsNorm) ?? false
+            activationFunction =
+                try container.decodeIfPresent(String.self, forKey: .activationFunction) ?? "swiglu"
+            maxTrainedPositions = try container.decodeIfPresent(Int.self, forKey: .maxTrainedPositions)
+            padTokenId = try container.decodeIfPresent(Int.self, forKey: .padTokenId)
+            bosTokenId = try container.decodeIfPresent(Int.self, forKey: .bosTokenId)
+            eosTokenId = try container.decodeIfPresent(Int.self, forKey: .eosTokenId)
+        }
 
         public init(
             modelType: String = "nomic_bert",
@@ -210,9 +243,9 @@ extension NomicBert {
         public func callAsFunction(_ hiddenStates: MLTensor) -> MLTensor {
             let x = gateUp(hiddenStates)
             let splitDim = x.shape[x.rank - 1] / 2
-            let x1 = x[0..., 0..., ..<splitDim]
-            let x2 = x[0..., 0..., splitDim...]
-            return down(silu(x1) * x2)
+            let gate = x[0..., 0..., ..<splitDim]
+            let up = x[0..., 0..., splitDim...]
+            return down(silu(gate) * up)
         }
     }
 }
@@ -330,9 +363,12 @@ extension NomicBert {
         public func encode(
             _ text: String,
             maxLength: Int = 2048,
-            postProcess: PostProcess? = nil
+            postProcess: PostProcess? = nil,
+            computePolicy: ComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(
+                computePolicy == .cpuOnly ? .cpuOnly : .cpuAndGPU
+            ) {
                 let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds: inputIds)
@@ -344,9 +380,12 @@ extension NomicBert {
             _ texts: [String],
             padTokenId: Int = 0,
             maxLength: Int = 2048,
-            postProcess: PostProcess? = nil
+            postProcess: PostProcess? = nil,
+            computePolicy: ComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(
+                computePolicy == .cpuOnly ? .cpuOnly : .cpuAndGPU
+            ) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(

@@ -5,6 +5,7 @@
 #     "transformers",
 #     "model2vec>=0.5.0",
 #     "sentence-transformers",
+#     "einops",
 # ]
 # ///
 
@@ -62,7 +63,7 @@ def static_embeddings(model_dir, text):
     return output.flatten().tolist()
 
 def nomic_embeddings(model_dir, text):
-    model = SentenceTransformer(model_dir, truncate_dim=768)
+    model = SentenceTransformer(model_dir, truncate_dim=768, trust_remote_code=True)
     output = model.encode(text, normalize_embeddings=False)
     return output.flatten().tolist()
 

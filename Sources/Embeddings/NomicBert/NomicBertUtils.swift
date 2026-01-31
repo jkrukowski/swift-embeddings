@@ -272,7 +272,7 @@ private func nomicCosSinTheta(
 ) -> (cos: MLTensor, sin: MLTensor) {
     let halfDims = Float(dims / 2)
     let positions = MLTensor(rangeFrom: Float(0), to: Float(n), by: 1)
-    let freqs = (-MLTensor(rangeFrom: Float(0), to: halfDims, by: 1) * (log(base) / Float(dims))).exp()
+    let freqs = (-MLTensor(rangeFrom: Float(0), to: halfDims, by: 1) * (log(base) / halfDims)).exp()
     let theta = positions.reshaped(to: [-1, 1]) * freqs.reshaped(to: [1, -1])
     return (theta.cos(), theta.sin())
 }

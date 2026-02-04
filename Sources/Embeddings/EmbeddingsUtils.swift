@@ -100,6 +100,7 @@ func maskedMeanPool(_ tensor: MLTensor, attentionMask: MLTensor) -> MLTensor {
 enum EmbeddingsError: Error {
     case fileNotFound
     case invalidFile
+    case configurationNotSupported
 }
 
 enum Constants {

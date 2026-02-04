@@ -20,16 +20,6 @@ import TestingUtils
 
 */
 
-actor PythonRunner {
-    static let shared = PythonRunner()
-
-    func run(arguments: [String]) async throws -> String {
-        try await Command
-            .run(arguments: arguments)
-            .pipedStream()
-            .concatenatedString(including: [.standardOutput])
-    }
-}
 
 func generateUsingTransformers(
     modelPath: String,
@@ -40,23 +30,16 @@ func generateUsingTransformers(
         Bundle.module.path(forResource: "generate", ofType: "py", inDirectory: "Scripts"),
         "Script not found"
     )
-    let environment = ProcessInfo.processInfo.environment
-    let arguments: [String]
-    if let pythonPath = environment["PYTHON_PATH"] {
-        arguments =
-            [
-                pythonPath, scriptUrl, "--model_dir", modelPath, "--type",
-                modelType.rawValue,
-            ] + texts.flatMap { ["--text", "\($0)"] }
-    } else {
-        let uvPath = try #require(environment["UV_PATH"], "UV_PATH not found")
-        arguments =
-            [
-                uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
-                modelType.rawValue,
-            ] + texts.flatMap { ["--text", "\($0)"] }
-    }
-    let result = try await PythonRunner.shared.run(arguments: arguments)
+    let uvPath = try #require(ProcessInfo.processInfo.environment["UV_PATH"], "UV_PATH not found")
+    let arguments =
+    [
+        uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
+        modelType.rawValue,
+    ] + texts.flatMap { ["--text", "\($0)"] }
+    let result =
+    try await Command
+        .run(arguments: arguments)
+        .concatenatedString()
     return
         result
         .components(separatedBy: .newlines)

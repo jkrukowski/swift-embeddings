@@ -7,10 +7,10 @@ public enum NomicBert {}
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension NomicBert {
-    public enum ComputePolicy: Sendable {
-        case cpuOnly
-        case cpuAndGPU
-    }
+//    public enum ComputePolicy: Sendable {
+//        case cpuOnly
+//        case cpuAndGPU
+//    }
 
     public struct ModelConfig: Codable, Sendable {
         public var modelType: String
@@ -364,11 +364,9 @@ extension NomicBert {
             _ text: String,
             maxLength: Int = 2048,
             postProcess: PostProcess? = nil,
-            computePolicy: ComputePolicy = .cpuAndGPU
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(
-                computePolicy == .cpuOnly ? .cpuOnly : .cpuAndGPU
-            ) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds: inputIds)
@@ -381,11 +379,9 @@ extension NomicBert {
             padTokenId: Int = 0,
             maxLength: Int = 2048,
             postProcess: PostProcess? = nil,
-            computePolicy: ComputePolicy = .cpuAndGPU
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(
-                computePolicy == .cpuOnly ? .cpuOnly : .cpuAndGPU
-            ) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(

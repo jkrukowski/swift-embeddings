@@ -52,12 +52,12 @@ struct NomicBertDegenerateEmbeddingTests {
             label: "Python"
         )
 
-        try assertNoDegeneratePairs(
+        try await assertNoDegeneratePairs(
             embeddings: swiftEmbeddings,
             names: Self.affectedEntityNames,
             label: "Swift"
         )
-        try assertNoDegeneratePairs(
+        try await assertNoDegeneratePairs(
             embeddings: pythonEmbeddings,
             names: Self.affectedEntityNames,
             label: "Python"
@@ -71,22 +71,15 @@ struct NomicBertDegenerateEmbeddingTests {
         label: String
     ) throws -> [[Float]] {
         guard dimension > 0 else {
-            #expect(
-                Bool(false),
-                Comment(rawValue: "\(label) embeddings have invalid dimension \(dimension)")
-            )
-            return []
+          Issue.record("\(label) embeddings have invalid dimension \(dimension)")
+          return []
         }
         let expected = count * dimension
         guard data.count == expected else {
-            #expect(
-                Bool(false),
-                Comment(rawValue:
-                    "\(label) embeddings shape mismatch: got \(data.count) values " +
-                        "(expected \(expected) for \(count) x \(dimension))"
-                )
-            )
-            return []
+          Issue.record(
+            "\(label) embeddings shape mismatch: got \(data.count) values (expected \(expected) for \(count) x \(dimension))"
+          )
+          return []
         }
         var result: [[Float]] = []
         result.reserveCapacity(count)
@@ -97,43 +90,27 @@ struct NomicBertDegenerateEmbeddingTests {
         return result
     }
 
+    @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
     private func assertNoDegeneratePairs(
         embeddings: [[Float]],
         names: [String],
         label: String
-    ) throws {
+    ) async throws {
         for i in 0..<embeddings.count {
             for j in (i + 1)..<embeddings.count {
                 let isIdentical = embeddings[i].elementsEqual(embeddings[j])
-                let similarity = cosineSimilarity(embeddings[i], embeddings[j])
+                let a = MLTensor(shape: [1, embeddings[i].count], scalars: embeddings[i], scalarType: Float.self)
+                let b = MLTensor(shape: [1, embeddings[j].count], scalars: embeddings[j], scalarType: Float.self)
+                let similarityTensor = MLTensorUtils.cosineSimilarity(a, b)
+                let similarity = await similarityTensor.shapedArray(of: Float.self).scalars[0]
                 if isIdentical || similarity > Self.suspiciousThreshold {
                     let simString = String(format: "%.6f", similarity)
-                    #expect(
-                        Bool(false),
-                        Comment(rawValue:
-                            "\(label) degenerate embeddings: '\(names[i])' ↔ '\(names[j])' " +
-                                "sim=\(simString)"
-                        )
+                    Issue.record(
+                            "\(label) degenerate embeddings: '\(names[i])' ↔ '\(names[j])' sim=\(simString)"
                     )
                 }
             }
         }
-    }
-
-    private func cosineSimilarity(_ x: [Float], _ y: [Float]) -> Float {
-        var dot: Float = 0
-        var normX: Float = 0
-        var normY: Float = 0
-        for i in 0..<min(x.count, y.count) {
-            let xv = x[i]
-            let yv = y[i]
-            dot += xv * yv
-            normX += xv * xv
-            normY += yv * yv
-        }
-        let denom = (sqrt(normX) * sqrt(normY))
-        if denom == 0 { return 0 }
-        return dot / denom
     }
 }
 

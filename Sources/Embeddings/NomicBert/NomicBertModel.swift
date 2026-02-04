@@ -7,10 +7,6 @@ public enum NomicBert {}
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 extension NomicBert {
-//    public enum ComputePolicy: Sendable {
-//        case cpuOnly
-//        case cpuAndGPU
-//    }
 
     public struct ModelConfig: Codable, Sendable {
         public var modelType: String

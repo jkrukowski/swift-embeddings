@@ -71,15 +71,15 @@ struct NomicBertDegenerateEmbeddingTests {
         label: String
     ) throws -> [[Float]] {
         guard dimension > 0 else {
-          Issue.record("\(label) embeddings have invalid dimension \(dimension)")
-          return []
+            Issue.record("\(label) embeddings have invalid dimension \(dimension)")
+            return []
         }
         let expected = count * dimension
         guard data.count == expected else {
-          Issue.record(
-            "\(label) embeddings shape mismatch: got \(data.count) values (expected \(expected) for \(count) x \(dimension))"
-          )
-          return []
+            Issue.record(
+                "\(label) embeddings shape mismatch: got \(data.count) values (expected \(expected) for \(count) x \(dimension))"
+            )
+            return []
         }
         var result: [[Float]] = []
         result.reserveCapacity(count)
@@ -99,14 +99,16 @@ struct NomicBertDegenerateEmbeddingTests {
         for i in 0..<embeddings.count {
             for j in (i + 1)..<embeddings.count {
                 let isIdentical = embeddings[i].elementsEqual(embeddings[j])
-                let a = MLTensor(shape: [1, embeddings[i].count], scalars: embeddings[i], scalarType: Float.self)
-                let b = MLTensor(shape: [1, embeddings[j].count], scalars: embeddings[j], scalarType: Float.self)
+                let a = MLTensor(
+                    shape: [1, embeddings[i].count], scalars: embeddings[i], scalarType: Float.self)
+                let b = MLTensor(
+                    shape: [1, embeddings[j].count], scalars: embeddings[j], scalarType: Float.self)
                 let similarityTensor = MLTensorUtils.cosineSimilarity(a, b)
                 let similarity = await similarityTensor.shapedArray(of: Float.self).scalars[0]
                 if isIdentical || similarity > Self.suspiciousThreshold {
                     let simString = String(format: "%.6f", similarity)
                     Issue.record(
-                            "\(label) degenerate embeddings: '\(names[i])' ↔ '\(names[j])' sim=\(simString)"
+                        "\(label) degenerate embeddings: '\(names[i])' ↔ '\(names[j])' sim=\(simString)"
                     )
                 }
             }

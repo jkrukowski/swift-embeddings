@@ -20,7 +20,6 @@ import TestingUtils
 
 */
 
-
 func generateUsingTransformers(
     modelPath: String,
     texts: [String],
@@ -32,12 +31,12 @@ func generateUsingTransformers(
     )
     let uvPath = try #require(ProcessInfo.processInfo.environment["UV_PATH"], "UV_PATH not found")
     let arguments =
-    [
-        uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
-        modelType.rawValue,
-    ] + texts.flatMap { ["--text", "\($0)"] }
+        [
+            uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
+            modelType.rawValue,
+        ] + texts.flatMap { ["--text", "\($0)"] }
     let result =
-    try await Command
+        try await Command
         .run(arguments: arguments)
         .concatenatedString()
     return

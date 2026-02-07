@@ -35,7 +35,8 @@ extension NomicBert {
 
         public init(from decoder: Swift.Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            modelType = try container.decodeIfPresent(String.self, forKey: .modelType) ?? "nomic_bert"
+            modelType =
+                try container.decodeIfPresent(String.self, forKey: .modelType) ?? "nomic_bert"
             nEmbd = try container.decodeIfPresent(Int.self, forKey: .nEmbd) ?? 768
             nHead = try container.decodeIfPresent(Int.self, forKey: .nHead) ?? 12
             nLayer = try container.decodeIfPresent(Int.self, forKey: .nLayer) ?? 12
@@ -43,10 +44,14 @@ extension NomicBert {
             nPositions = try container.decodeIfPresent(Int.self, forKey: .nPositions) ?? 2048
             vocabSize = try container.decodeIfPresent(Int.self, forKey: .vocabSize) ?? 30522
             typeVocabSize = try container.decodeIfPresent(Int.self, forKey: .typeVocabSize) ?? 2
-            layerNormEpsilon = try container.decodeIfPresent(Float.self, forKey: .layerNormEpsilon) ?? 1e-12
-            rotaryEmbBase = try container.decodeIfPresent(Float.self, forKey: .rotaryEmbBase) ?? 10_000
-            rotaryEmbFraction = try container.decodeIfPresent(Float.self, forKey: .rotaryEmbFraction) ?? 1.0
-            rotaryEmbInterleaved = try container.decodeIfPresent(Bool.self, forKey: .rotaryEmbInterleaved) ?? false
+            layerNormEpsilon =
+                try container.decodeIfPresent(Float.self, forKey: .layerNormEpsilon) ?? 1e-12
+            rotaryEmbBase =
+                try container.decodeIfPresent(Float.self, forKey: .rotaryEmbBase) ?? 10_000
+            rotaryEmbFraction =
+                try container.decodeIfPresent(Float.self, forKey: .rotaryEmbFraction) ?? 1.0
+            rotaryEmbInterleaved =
+                try container.decodeIfPresent(Bool.self, forKey: .rotaryEmbInterleaved) ?? false
             qkvProjBias = try container.decodeIfPresent(Bool.self, forKey: .qkvProjBias) ?? false
             mlpFc1Bias = try container.decodeIfPresent(Bool.self, forKey: .mlpFc1Bias) ?? false
             mlpFc2Bias = try container.decodeIfPresent(Bool.self, forKey: .mlpFc2Bias) ?? false
@@ -55,7 +60,8 @@ extension NomicBert {
             useRmsNorm = try container.decodeIfPresent(Bool.self, forKey: .useRmsNorm) ?? false
             activationFunction =
                 try container.decodeIfPresent(String.self, forKey: .activationFunction) ?? "swiglu"
-            maxTrainedPositions = try container.decodeIfPresent(Int.self, forKey: .maxTrainedPositions)
+            maxTrainedPositions = try container.decodeIfPresent(
+                Int.self, forKey: .maxTrainedPositions)
             padTokenId = try container.decodeIfPresent(Int.self, forKey: .padTokenId)
             bosTokenId = try container.decodeIfPresent(Int.self, forKey: .bosTokenId)
             eosTokenId = try container.decodeIfPresent(Int.self, forKey: .eosTokenId)

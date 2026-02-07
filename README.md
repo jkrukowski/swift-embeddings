@@ -43,6 +43,12 @@ let modelBundle = try await Bert.loadModelBundle(
 )
 ```
 
+### NomicBERT (Nomic Embed)
+
+Some of the supported models on `Hugging Face`:
+
+- [nomic-ai/nomic-embed-text-v1.5](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5)
+
 ### RoBERTa (Robustly Optimized BERT Approach)
 
 Some of the supported models on `Hugging Face`:
@@ -189,6 +195,7 @@ Subcommands:
 ```bash
 bert                    Encode text using BERT model
 modern-bert             Encode text using ModernBERT model
+nomic-bert              Encode text using Nomic embedding model
 clip                    Encode text using CLIP model
 model2vec               Encode text using Model2Vec model
 roberta                 Encode text using RoBERTa model

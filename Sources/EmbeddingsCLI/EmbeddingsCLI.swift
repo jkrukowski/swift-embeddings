@@ -10,6 +10,7 @@ extension CommandConfiguration {
             ClipCommand.self,
             Model2VecCommand.self,
             ModernBertCommand.self,
+            NomicBertCommand.self,
             RobertaCommand.self,
             StaticEmbeddingsCommand.self,
             Word2VecCommand.self,

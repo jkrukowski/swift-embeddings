@@ -20,6 +20,7 @@ import TestingUtils
 
 */
 
+
 func generateUsingTransformers(
     modelPath: String,
     texts: [String],
@@ -31,12 +32,12 @@ func generateUsingTransformers(
     )
     let uvPath = try #require(ProcessInfo.processInfo.environment["UV_PATH"], "UV_PATH not found")
     let arguments =
-        [
-            uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
-            modelType.rawValue,
-        ] + texts.flatMap { ["--text", "\($0)"] }
+    [
+        uvPath, "run", "--quiet", scriptUrl, "--model_dir", modelPath, "--type",
+        modelType.rawValue,
+    ] + texts.flatMap { ["--text", "\($0)"] }
     let result =
-        try await Command
+    try await Command
         .run(arguments: arguments)
         .concatenatedString()
     return
@@ -82,6 +83,7 @@ enum ModelType: String {
     case clip
     case model2Vec = "model2vec"
     case modernbert = "modernbert"
+    case nomic = "nomic"
     case roberta
     case staticEmbeddings = "static-embeddings"
     case xlmRoberta = "xlm-roberta"
@@ -109,6 +111,7 @@ extension Utils {
         static let model2Vec = "minishlab/potion-base-2M"
         static let modernBertBase = "answerdotai/ModernBERT-base"
         static let modernBertNomic = "nomic-ai/modernbert-embed-base"
+        static let nomicEmbedTextV15 = "nomic-ai/nomic-embed-text-v1.5"
         static let roberta = "FacebookAI/roberta-base"
         static let staticEmbeddings = "sentence-transformers/static-retrieval-mrl-en-v1"
         static let xlmRoberta = "FacebookAI/xlm-roberta-base"

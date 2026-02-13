@@ -382,18 +382,20 @@ extension Bert {
 
         public func encode(
             _ text: String,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            postProcess: PostProcess? = nil
         ) throws -> MLTensor {
             let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
             let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
             let result = model(inputIds: inputIds)
-            return result.sequenceOutput[0..., 0, 0...]
+            return processResult(result.sequenceOutput, with: postProcess)
         }
 
         public func batchEncode(
             _ texts: [String],
             padTokenId: Int = 0,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            postProcess: PostProcess? = nil
         ) throws -> MLTensor {
             let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                 texts, padTokenId: padTokenId, maxLength: maxLength)
@@ -403,10 +405,11 @@ extension Bert {
             let attentionMask = MLTensor(
                 shape: batchTokenizeResult.shape,
                 scalars: batchTokenizeResult.attentionMask)
-            return model(
+            let result = model(
                 inputIds: inputIds,
                 attentionMask: attentionMask
-            ).sequenceOutput[0..., 0, 0...]
+            )
+            return processResult(result.sequenceOutput, with: postProcess, attentionMask: attentionMask)
         }
     }
 }

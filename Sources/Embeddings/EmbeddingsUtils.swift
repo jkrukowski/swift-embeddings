@@ -58,6 +58,8 @@ func downloadModelFromHub(
 public enum PostProcess {
     case meanPool
     case meanPoolAndNormalize
+    case lastTokenPool
+    case lastTokenPoolAndNormalize
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
@@ -83,7 +85,33 @@ func processResult(
                 result.mean(alongAxes: 1, keepRank: false)
             }
         return normalizeEmbeddings(pooled)
+    case .lastTokenPool:
+        return lastTokenPool(result, attentionMask: attentionMask)
+    case .lastTokenPoolAndNormalize:
+        return normalizeEmbeddings(lastTokenPool(result, attentionMask: attentionMask))
     }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+func lastTokenPool(_ tensor: MLTensor, attentionMask: MLTensor? = nil) -> MLTensor {
+    // tensor shape: [batch, seq_len, hidden_dim]
+    // Selects the hidden state of the last non-padding token for each sequence.
+    // Assumes right padding, so the last non-padding index is `sum(attentionMask) - 1`.
+    let seqLen = tensor.shape[1]
+    let lastIndex: MLTensor =
+        if let attentionMask {
+            attentionMask.sum(alongAxes: 1, keepRank: true) - 1.0
+        } else {
+            MLTensor(repeating: Float(seqLen - 1), shape: [tensor.shape[0], 1])
+        }
+    let positions = MLTensor(
+        rangeFrom: 0.0,
+        to: Float(seqLen),
+        by: 1.0
+    ).expandingShape(at: 0)  // [1, seq_len]
+    let oneHot = (positions .== lastIndex).cast(to: Float.self)  // [batch, seq_len]
+    let selected = tensor * oneHot.expandingShape(at: 2)
+    return selected.sum(alongAxes: 1, keepRank: false)
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)

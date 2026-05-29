@@ -83,6 +83,7 @@ enum ModelType: String {
     case model2Vec = "model2vec"
     case modernbert = "modernbert"
     case nomic = "nomic"
+    case qwen3
     case roberta
     case staticEmbeddings = "static-embeddings"
     case xlmRoberta = "xlm-roberta"
@@ -111,6 +112,7 @@ extension Utils {
         static let modernBertBase = "answerdotai/ModernBERT-base"
         static let modernBertNomic = "nomic-ai/modernbert-embed-base"
         static let nomicEmbedTextV15 = "nomic-ai/nomic-embed-text-v1.5"
+        static let qwen3Embedding = "jkrukowski/Qwen3-Embedding-0.6B-F32"
         static let roberta = "FacebookAI/roberta-base"
         static let staticEmbeddings = "sentence-transformers/static-retrieval-mrl-en-v1"
         static let xlmRoberta = "FacebookAI/xlm-roberta-base"

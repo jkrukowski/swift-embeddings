@@ -39,6 +39,15 @@ public func layerNorm(weight: MLTensor, bias: MLTensor, epsilon: Float) -> Layer
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
+public func rmsNorm(weight: MLTensor, epsilon: Float) -> Layer {
+    { x in
+        let variance = x.squared().mean(alongAxes: -1, keepRank: true)
+        let norm = x * (variance + epsilon).rsqrt()
+        return norm * weight
+    }
+}
+
+@available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func roPE(dims: Int, base: Int = 10_000) -> Layer {
     { x in
         let shape = x.shape

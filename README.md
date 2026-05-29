@@ -82,6 +82,24 @@ let modelBundle = try await XLMRoberta.loadModelBundle(
 )
 ```
 
+### Qwen3 (Qwen3 Embedding)
+
+Decoder-only embedding models that use last-token pooling. By default `encode` / `batchEncode` apply
+`.lastTokenPoolAndNormalize`.
+Some of the supported models on `Hugging Face`:
+
+- [jkrukowski/Qwen3-Embedding-0.6B-F32](https://huggingface.co/jkrukowski/Qwen3-Embedding-0.6B-F32)
+
+```swift
+let modelBundle = try await Qwen3.loadModelBundle(
+    from: "jkrukowski/Qwen3-Embedding-0.6B-F32"
+)
+let encoded = try modelBundle.encode("The cat is black")
+```
+
+NOTE: The original Qwen3 checkpoints (e.g. [Qwen/Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B))
+are stored in `BF16`, which `MLTensor` cannot represent. Use a `Float32` conversion of the weights.
+
 ### CLIP (Contrastive Language–Image Pre-training)
 
 NOTE: only text encoding is supported for now.
@@ -196,6 +214,7 @@ Subcommands:
 bert                    Encode text using BERT model
 modern-bert             Encode text using ModernBERT model
 nomic-bert              Encode text using Nomic embedding model
+qwen3                   Encode text using Qwen3 embedding model
 clip                    Encode text using CLIP model
 model2vec               Encode text using Model2Vec model
 roberta                 Encode text using RoBERTa model

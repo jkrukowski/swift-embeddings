@@ -11,6 +11,7 @@
 
 
 import warnings
+import torch
 from transformers import AutoTokenizer, AutoModel
 from transformers import CLIPModel
 from transformers import logging
@@ -68,6 +69,30 @@ def nomic_embeddings(model_dir, text):
     return output.flatten().tolist()
 
 
+def qwen3_embeddings(model_dir, text):
+    tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+    tokenizer.padding_side = "right"
+    model = AutoModel.from_pretrained(model_dir, local_files_only=True)
+    if isinstance(text, str):
+        text = [text]
+    encoded_input = tokenizer(
+        text,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=512,
+    )
+    with torch.no_grad():
+        output = model(**encoded_input)
+    last_hidden = output.last_hidden_state  # [batch, seq, hidden]
+    attention_mask = encoded_input["attention_mask"]
+    # right padding -> last non-padding index is sum(mask) - 1
+    last_indices = attention_mask.sum(dim=1) - 1
+    pooled = last_hidden[torch.arange(last_hidden.size(0)), last_indices]
+    pooled = torch.nn.functional.normalize(pooled, p=2, dim=-1)
+    return pooled.flatten().tolist()
+
+
 def main(model_dir, text, emb_type="bert"):
     if emb_type == "bert" or emb_type == "xlm-roberta" or emb_type == "roberta":
         values = embeddings(model_dir, text)
@@ -81,6 +106,8 @@ def main(model_dir, text, emb_type="bert"):
         values = static_embeddings(model_dir, text)
     elif emb_type == "nomic":
         values = nomic_embeddings(model_dir, text)
+    elif emb_type == "qwen3":
+        values = qwen3_embeddings(model_dir, text)
     else:
         raise ValueError(f"Unknown emb_type: {emb_type}")
     print("\n".join([str(x) for x in values]))

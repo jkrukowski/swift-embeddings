@@ -11,6 +11,7 @@ extension CommandConfiguration {
             Model2VecCommand.self,
             ModernBertCommand.self,
             NomicBertCommand.self,
+            Qwen3Command.self,
             RobertaCommand.self,
             StaticEmbeddingsCommand.self,
             Word2VecCommand.self,

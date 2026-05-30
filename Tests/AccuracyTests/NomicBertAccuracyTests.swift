@@ -21,7 +21,7 @@ struct NomicBertAccuracyTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.encode(
+        let encoded = try await modelBundle.encode(
             prefixed(text),
             postProcess: .meanPool,
             computePolicy: .cpuOnly
@@ -46,7 +46,7 @@ struct NomicBertAccuracyTests {
             downloadBase: Utils.modelPath
         )
         let prefixedTexts = Utils.batchTextsToTests.map(prefixed)
-        let encoded = try modelBundle.batchEncode(
+        let encoded = try await modelBundle.batchEncode(
             prefixedTexts,
             postProcess: .meanPool,
             computePolicy: .cpuOnly

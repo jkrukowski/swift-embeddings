@@ -373,18 +373,20 @@ extension Roberta {
 
         public func encode(
             _ text: String,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            postProcess: PostProcess? = nil
         ) throws -> MLTensor {
             let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
             let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
             let result = model(inputIds: inputIds)
-            return result[0..., 0, 0...]
+            return processResult(result, with: postProcess)
         }
 
         public func batchEncode(
             _ texts: [String],
             padTokenId: Int = 0,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            postProcess: PostProcess? = nil
         ) throws -> MLTensor {
             let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                 texts, padTokenId: padTokenId, maxLength: maxLength)
@@ -394,7 +396,8 @@ extension Roberta {
             let attentionMask = MLTensor(
                 shape: batchTokenizeResult.shape,
                 scalars: batchTokenizeResult.attentionMask)
-            return model(inputIds: inputIds, attentionMask: attentionMask)[0..., 0, 0...]
+            let result = model(inputIds: inputIds, attentionMask: attentionMask)
+            return processResult(result, with: postProcess, attentionMask: attentionMask)
         }
     }
 }

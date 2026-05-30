@@ -25,7 +25,7 @@ struct NomicBertDegenerateEmbeddingTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.batchEncode(
+        let encoded = try await modelBundle.batchEncode(
             texts,
             postProcess: .meanPool,
             computePolicy: .cpuOnly

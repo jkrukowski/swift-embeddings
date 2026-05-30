@@ -14,7 +14,7 @@ struct NomicBertCommand: AsyncParsableCommand {
 
     func run() async throws {
         let modelBundle = try await NomicBert.loadModelBundle(from: modelId)
-        let encoded = try modelBundle.encode(text, maxLength: maxLength, postProcess: .meanPool)
+        let encoded = try await modelBundle.encode(text, maxLength: maxLength, postProcess: .meanPool)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

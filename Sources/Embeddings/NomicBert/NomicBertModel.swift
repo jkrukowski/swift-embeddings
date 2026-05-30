@@ -325,23 +325,34 @@ extension NomicBert {
             inputIds: MLTensor,
             tokenTypeIds: MLTensor? = nil,
             attentionMask: MLTensor? = nil
-        ) -> MLTensor {
+        ) async -> MLTensor {
             var hiddenStates = embeddings(
                 inputIds: inputIds,
                 tokenTypeIds: tokenTypeIds
             )
             hiddenStates = embeddingNorm(hiddenStates)
-            let mask: MLTensor? =
-                if let attentionMask {
-                    (1.0 - attentionMask.expandingShape(at: 1, 1)) * -10000.0
-                } else {
-                    nil
-                }
-            for layer in layers {
+            // Force-materialize the attention mask expansion so it doesn't persist
+            // as a lazy graph node across all transformer layers.
+            let mask: MLTensor?
+            if let attentionMask {
+                mask = MLTensor(
+                    await ((1.0 - attentionMask.expandingShape(at: 1, 1)) * -10000.0)
+                        .shapedArray(of: Float.self)
+                )
+            } else {
+                mask = nil
+            }
+            for (i, layer) in layers.enumerated() {
                 hiddenStates = layer(
                     hiddenStates,
                     attentionMask: mask
                 )
+                // Force evaluation every 2 layers to break the lazy computation graph.
+                // Without this, MLTensor keeps all layers of intermediates alive
+                // simultaneously (~3.4GB per layer at seq=8192), causing OOM.
+                if (i + 1) % 2 == 0 && i + 1 < layers.count {
+                    hiddenStates = MLTensor(await hiddenStates.shapedArray(of: Float.self))
+                }
             }
             return hiddenStates
         }
@@ -367,11 +378,11 @@ extension NomicBert {
             maxLength: Int = 2048,
             postProcess: PostProcess? = nil,
             computePolicy: MLComputePolicy = .cpuAndGPU
-        ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+        ) async throws -> MLTensor {
+            try await withMLTensorComputePolicy(computePolicy) {
                 let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
-                let result = model(inputIds: inputIds)
+                let result = await model(inputIds: inputIds)
                 return processResult(result, with: postProcess)
             }
         }
@@ -382,8 +393,8 @@ extension NomicBert {
             maxLength: Int = 2048,
             postProcess: PostProcess? = nil,
             computePolicy: MLComputePolicy = .cpuAndGPU
-        ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+        ) async throws -> MLTensor {
+            try await withMLTensorComputePolicy(computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(
@@ -392,7 +403,7 @@ extension NomicBert {
                 let attentionMask = MLTensor(
                     shape: batchTokenizeResult.shape,
                     scalars: batchTokenizeResult.attentionMask)
-                let result = model(
+                let result = await model(
                     inputIds: inputIds,
                     attentionMask: attentionMask
                 )

@@ -33,6 +33,10 @@ let package = Package(
             from: "1.3.3"
         ),
         .package(
+            url: "https://github.com/huggingface/swift-huggingface.git",
+            from: "0.8.1"
+        ),
+        .package(
             url: "https://github.com/jkrukowski/swift-safetensors.git",
             from: "0.0.7"
         ),
@@ -64,7 +68,9 @@ let package = Package(
             dependencies: [
                 "MLTensorUtils",
                 .product(name: "Safetensors", package: "swift-safetensors"),
+                .product(name: "Hub", package: "swift-transformers"),
                 .product(name: "Transformers", package: "swift-transformers"),
+                .product(name: "HuggingFace", package: "swift-huggingface"),
                 .product(name: "SentencepieceTokenizer", package: "swift-sentencepiece"),
             ]
         ),

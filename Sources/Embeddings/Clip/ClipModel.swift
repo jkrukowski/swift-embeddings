@@ -291,27 +291,36 @@ extension Clip {
             self.tokenizer = tokenizer
         }
 
-        public func encode(_ text: String, maxLength: Int = 77) throws -> MLTensor {
-            let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
-            let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
-            let modelOutput = textModel(inputIds: inputIds)
-            let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
-            return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)
+        public func encode(
+            _ text: String,
+            maxLength: Int = 77,
+            computePolicy: MLComputePolicy = .cpuAndGPU
+        ) throws -> MLTensor {
+            try withMLTensorComputePolicy(computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+                let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
+                let modelOutput = textModel(inputIds: inputIds)
+                let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
+                return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)
+            }
         }
 
         public func batchEncode(
             _ texts: [String],
             padTokenId: Int = 0,
-            maxLength: Int = 77
+            maxLength: Int = 77,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                texts, padTokenId: padTokenId, maxLength: maxLength)
-            let inputIds = MLTensor(
-                shape: batchTokenizeResult.shape,
-                scalars: batchTokenizeResult.tokens)
-            let modelOutput = textModel(inputIds: inputIds)
-            let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
-            return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)
+            try withMLTensorComputePolicy(computePolicy) {
+                let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
+                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                let inputIds = MLTensor(
+                    shape: batchTokenizeResult.shape,
+                    scalars: batchTokenizeResult.tokens)
+                let modelOutput = textModel(inputIds: inputIds)
+                let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
+                return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)
+            }
         }
     }
 }

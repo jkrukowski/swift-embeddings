@@ -373,28 +373,34 @@ extension Roberta {
 
         public func encode(
             _ text: String,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
-            let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
-            let result = model(inputIds: inputIds)
-            return result[0..., 0, 0...]
+            try withMLTensorComputePolicy(computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+                let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
+                let result = model(inputIds: inputIds)
+                return result[0..., 0, 0...]
+            }
         }
 
         public func batchEncode(
             _ texts: [String],
             padTokenId: Int = 0,
-            maxLength: Int = 512
+            maxLength: Int = 512,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                texts, padTokenId: padTokenId, maxLength: maxLength)
-            let inputIds = MLTensor(
-                shape: batchTokenizeResult.shape,
-                scalars: batchTokenizeResult.tokens)
-            let attentionMask = MLTensor(
-                shape: batchTokenizeResult.shape,
-                scalars: batchTokenizeResult.attentionMask)
-            return model(inputIds: inputIds, attentionMask: attentionMask)[0..., 0, 0...]
+            try withMLTensorComputePolicy(computePolicy) {
+                let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
+                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                let inputIds = MLTensor(
+                    shape: batchTokenizeResult.shape,
+                    scalars: batchTokenizeResult.tokens)
+                let attentionMask = MLTensor(
+                    shape: batchTokenizeResult.shape,
+                    scalars: batchTokenizeResult.attentionMask)
+                return model(inputIds: inputIds, attentionMask: attentionMask)[0..., 0, 0...]
+            }
         }
     }
 }

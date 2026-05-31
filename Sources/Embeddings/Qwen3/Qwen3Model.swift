@@ -291,9 +291,10 @@ extension Qwen3 {
         public func encode(
             _ text: String,
             maxLength: Int = 32_768,
-            postProcess: PostProcess? = .lastTokenPoolAndNormalize
+            postProcess: PostProcess? = .lastTokenPoolAndNormalize,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds)
@@ -305,9 +306,10 @@ extension Qwen3 {
             _ texts: [String],
             padTokenId: Int = 151_643,
             maxLength: Int = 32_768,
-            postProcess: PostProcess? = .lastTokenPoolAndNormalize
+            postProcess: PostProcess? = .lastTokenPoolAndNormalize,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(

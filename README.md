@@ -200,6 +200,21 @@ let result = await distance.cast(to: Float.self).shapedArray(of: Float.self).sca
 print(result)
 ```
 
+### Compute Policy
+
+All transformer and embedding-table model bundles (`Bert`, `Clip`, `Model2Vec`, `ModernBert`,
+`NomicBert`, `Qwen3`, `Roberta`, `StaticEmbeddings`, `XLMRoberta`) accept an optional
+`computePolicy` parameter on `encode` / `batchEncode`. It defaults to `.cpuAndGPU` and controls
+the `MLComputePolicy` used for the underlying `MLTensor` computation:
+
+```swift
+// run on CPU only
+let encoded = try modelBundle.encode("The cat is black", computePolicy: .cpuOnly)
+```
+
+The default `.cpuAndGPU` also works around an occasional crash in the underlying
+`BNNS` matmul implementation, see more [here](https://github.com/jkrukowski/swift-embeddings/issues/17).
+
 ## Command Line Demo
 
 To run the command line demo, use the following command:

@@ -349,9 +349,10 @@ extension ModernBert {
         public func encode(
             _ text: String,
             maxLength: Int = 8192,
-            postProcess: PostProcess? = nil
+            postProcess: PostProcess? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds)
@@ -363,9 +364,10 @@ extension ModernBert {
             _ texts: [String],
             padTokenId: Int = 50283,
             maxLength: Int = 8192,
-            postProcess: PostProcess? = nil
+            postProcess: PostProcess? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(.cpuAndGPU) {
+            try withMLTensorComputePolicy(computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
                     texts, padTokenId: padTokenId, maxLength: maxLength)
                 let inputIds = MLTensor(

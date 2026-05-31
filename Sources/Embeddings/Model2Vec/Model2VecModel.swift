@@ -31,32 +31,38 @@ extension Model2Vec {
         public func encode(
             _ text: String,
             normalize: Bool = false,
-            maxLength: Int? = nil
+            maxLength: Int? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            try batchEncode([text], normalize: normalize, maxLength: maxLength)
+            try batchEncode(
+                [text], normalize: normalize, maxLength: maxLength, computePolicy: computePolicy)
         }
 
         public func batchEncode(
             _ texts: [String],
             normalize: Bool = false,
-            maxLength: Int? = nil
+            maxLength: Int? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            let inputIdsBatch = try texts.map { try tokenize($0, maxLength: maxLength) }
-            let embeddingsBatch = inputIdsBatch.map { inputIds in
-                if let inputIds {
-                    model.embeddings
-                        .gathering(atIndices: inputIds, alongAxis: 0)
-                        .mean(alongAxes: 0)
-                } else {
-                    MLTensor(zeros: [model.dimienstion], scalarType: Int32.self)
+            try withMLTensorComputePolicy(computePolicy) {
+                let inputIdsBatch = try texts.map { try tokenize($0, maxLength: maxLength) }
+                let embeddingsBatch = inputIdsBatch.map { inputIds in
+                    if let inputIds {
+                        model.embeddings
+                            .gathering(atIndices: inputIds, alongAxis: 0)
+                            .mean(alongAxes: 0)
+                    } else {
+                        MLTensor(zeros: [model.dimienstion], scalarType: Int32.self)
+                    }
                 }
-            }
-            let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(to: Float.self)
-            if normalize {
-                let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
-                return embeddings / norm
-            } else {
-                return embeddings
+                let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(
+                    to: Float.self)
+                if normalize {
+                    let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
+                    return embeddings / norm
+                } else {
+                    return embeddings
+                }
             }
         }
 

@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "benchmarks",
     platforms: [
-        .macOS(.v15),
+        .macOS(.v15)
     ],
     dependencies: [
         .package(name: "swift-embeddings", path: ".."),

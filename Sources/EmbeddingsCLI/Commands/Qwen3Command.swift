@@ -8,7 +8,7 @@ struct Qwen3Command: AsyncParsableCommand {
         commandName: "qwen3",
         abstract: "Encode text using Qwen3 embedding model"
     )
-    @Option var modelId: String = "Qwen/Qwen3-Embedding-0.6B"
+    @Option var modelId: String = "jkrukowski/Qwen3-Embedding-0.6B-F32"
     @Option var text: String = "Text to encode"
     @Option var maxLength: Int = 512
 

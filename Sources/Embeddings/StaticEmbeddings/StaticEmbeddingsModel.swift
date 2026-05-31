@@ -22,13 +22,15 @@ extension StaticEmbeddings {
             _ text: String,
             normalize: Bool = false,
             maxLength: Int? = nil,
-            truncateDimension: Int? = nil
+            truncateDimension: Int? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
             try batchEncode(
                 [text],
                 normalize: normalize,
                 maxLength: maxLength,
-                truncateDimension: truncateDimension
+                truncateDimension: truncateDimension,
+                computePolicy: computePolicy
             )
         }
 
@@ -36,31 +38,35 @@ extension StaticEmbeddings {
             _ texts: [String],
             normalize: Bool = false,
             maxLength: Int? = nil,
-            truncateDimension: Int? = nil
+            truncateDimension: Int? = nil,
+            computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
-            let dimension =
-                if let truncateDimension {
-                    min(truncateDimension, model.dimension)
-                } else {
-                    model.dimension
+            try withMLTensorComputePolicy(computePolicy) {
+                let dimension =
+                    if let truncateDimension {
+                        min(truncateDimension, model.dimension)
+                    } else {
+                        model.dimension
+                    }
+                precondition(dimension > 0, "Dimension must be greater than 0")
+                let inputIdsBatch = try texts.map { try tokenize($0, maxLength: maxLength) }
+                let embeddingsBatch = inputIdsBatch.map { inputIds in
+                    if let inputIds {
+                        model.embeddings
+                            .gathering(atIndices: inputIds, alongAxis: 0)
+                            .mean(alongAxes: 0)[0..<dimension]
+                    } else {
+                        MLTensor(zeros: [dimension], scalarType: Int32.self)
+                    }
                 }
-            precondition(dimension > 0, "Dimension must be greater than 0")
-            let inputIdsBatch = try texts.map { try tokenize($0, maxLength: maxLength) }
-            let embeddingsBatch = inputIdsBatch.map { inputIds in
-                if let inputIds {
-                    model.embeddings
-                        .gathering(atIndices: inputIds, alongAxis: 0)
-                        .mean(alongAxes: 0)[0..<dimension]
+                let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(
+                    to: Float.self)
+                if normalize {
+                    let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
+                    return embeddings / norm
                 } else {
-                    MLTensor(zeros: [dimension], scalarType: Int32.self)
+                    return embeddings
                 }
-            }
-            let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(to: Float.self)
-            if normalize {
-                let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
-                return embeddings / norm
-            } else {
-                return embeddings
             }
         }
 

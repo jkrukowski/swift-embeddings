@@ -243,7 +243,6 @@ extension XLMRoberta {
         return XLMRoberta.Model(
             embeddings: embeddings,
             encoder: XLMRoberta.Encoder(layers: layers),
-            pooler: pooler,
-            numHiddenLayers: config.numHiddenLayers)
+            pooler: pooler)
     }
 }

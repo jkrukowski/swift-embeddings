@@ -17,11 +17,14 @@ public func embedding(weight: MLTensor) -> Layer {
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 public func linear(weight: MLTensor, bias: MLTensor? = nil) -> Layer {
-    { x in
+    // Hoist the weight transpose out of the per-call closure so it is built
+    // once when the layer is created rather than on every forward pass.
+    let weightTransposed = weight.transposed()
+    return { x in
         if let bias {
-            x.matmul(weight.transposed()) + bias
+            x.matmul(weightTransposed) + bias
         } else {
-            x.matmul(weight.transposed())
+            x.matmul(weightTransposed)
         }
     }
 }

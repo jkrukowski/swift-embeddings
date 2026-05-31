@@ -233,6 +233,20 @@ Command line options:
 -h, --help                                  Show help information.
 ```
 
+## Benchmarks
+
+The [`Benchmarks`](Benchmarks) package, built with [package-benchmark](https://github.com/ordo-one/package-benchmark), measures the encode performance of each model architecture. Run all benchmarks with:
+
+```bash
+swift package --package-path Benchmarks --disable-sandbox benchmark
+```
+
+`--disable-sandbox` is required because each benchmark downloads its model in `setup` (cached after the first run). To list the available benchmarks:
+
+```bash
+swift package --package-path Benchmarks benchmark list
+```
+
 ## Code Formatting
 
 This project uses [swift-format](https://github.com/swiftlang/swift-format). To format the code run:

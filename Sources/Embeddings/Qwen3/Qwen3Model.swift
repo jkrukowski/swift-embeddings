@@ -140,11 +140,11 @@ extension Qwen3 {
             let kvHeads = x.shape[1]
             let seqLen = x.shape[2]
             let headDim = x.shape[3]
+            // Tile each kv head nRep times along a new axis, then merge it into
+            // the head axis. Avoids allocating a `ones` tensor and multiplying.
             let expanded = x.expandingShape(at: 2)  // [bs, kvHeads, 1, seq, headDim]
-            let ones = MLTensor(
-                ones: [bs, kvHeads, nRep, seqLen, headDim], scalarType: Float.self)
-            let broadcast = expanded * ones
-            return broadcast.reshaped(to: [bs, kvHeads * nRep, seqLen, headDim])
+            let tiled = expanded.tiled(multiples: [1, 1, nRep, 1, 1])
+            return tiled.reshaped(to: [bs, kvHeads * nRep, seqLen, headDim])
         }
 
         public func callAsFunction(

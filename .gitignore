@@ -9,3 +9,5 @@ DerivedData/
 .swiftpm/
 .vscode/
 .benchmarkBaselines/
+Benchmarks/.build/
+Benchmarks/Package.resolved

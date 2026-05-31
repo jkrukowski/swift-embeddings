@@ -208,8 +208,7 @@ extension XLMRoberta {
 
         public func callAsFunction(
             hiddenStates: MLTensor,
-            attentionMask: MLTensor?,
-            headMask: MLTensor?
+            attentionMask: MLTensor?
         ) -> MLTensor {
             let queries = query(hiddenStates)
             let keys = key(hiddenStates)
@@ -224,10 +223,7 @@ extension XLMRoberta {
             if let attentionMask {
                 attentionScores = attentionScores + attentionMask
             }
-            var attentionProbs = attentionScores.softmax(alongAxis: -1)
-            if let headMask {
-                attentionProbs = attentionProbs * headMask
-            }
+            let attentionProbs = attentionScores.softmax(alongAxis: -1)
             var contextLayer = attentionProbs.matmul(valueLayer)
             contextLayer = contextLayer.transposed(permutation: 0, 2, 1, 3)
             let newContextLayerShape = contextLayer.shape.dropLast(2) + [allHeadSize]
@@ -252,13 +248,11 @@ extension XLMRoberta {
 
         public func callAsFunction(
             hiddenStates: MLTensor,
-            attentionMask: MLTensor?,
-            headMask: MLTensor?
+            attentionMask: MLTensor?
         ) -> MLTensor {
             let selfOutputs = selfAttention(
                 hiddenStates: hiddenStates,
-                attentionMask: attentionMask,
-                headMask: headMask
+                attentionMask: attentionMask
             )
             return output(
                 hiddenStates: selfOutputs,
@@ -311,13 +305,11 @@ extension XLMRoberta {
 
         public func callAsFunction(
             hiddenStates: MLTensor,
-            attentionMask: MLTensor?,
-            headMask: MLTensor?
+            attentionMask: MLTensor?
         ) -> MLTensor {
             let attentionOutput = attention(
                 hiddenStates: hiddenStates,
-                attentionMask: attentionMask,
-                headMask: headMask
+                attentionMask: attentionMask
             )
             let intermediateOutput = intermediate(
                 hiddenStates: attentionOutput
@@ -341,21 +333,13 @@ extension XLMRoberta {
 
         public func callAsFunction(
             hiddenStates: MLTensor,
-            attentionMask: MLTensor?,
-            headMask: MLTensor?
+            attentionMask: MLTensor?
         ) -> MLTensor {
             var hiddenStates = hiddenStates
-            for (index, layer) in layers.enumerated() {
-                let layerHeadMask: MLTensor? =
-                    if let headMask {
-                        headMask[index]
-                    } else {
-                        nil
-                    }
+            for layer in layers {
                 hiddenStates = layer(
                     hiddenStates: hiddenStates,
-                    attentionMask: attentionMask,
-                    headMask: layerHeadMask
+                    attentionMask: attentionMask
                 )
             }
             return hiddenStates
@@ -369,18 +353,15 @@ extension XLMRoberta {
         let embeddings: XLMRoberta.Embeddings
         let encoder: XLMRoberta.Encoder
         let pooler: XLMRoberta.Pooler?
-        let numHiddenLayers: Int
 
         public init(
             embeddings: XLMRoberta.Embeddings,
             encoder: XLMRoberta.Encoder,
-            pooler: XLMRoberta.Pooler?,
-            numHiddenLayers: Int
+            pooler: XLMRoberta.Pooler?
         ) {
             self.embeddings = embeddings
             self.encoder = encoder
             self.pooler = pooler
-            self.numHiddenLayers = numHiddenLayers
         }
 
         private func extendedAttentionMask(_ attentionMask: MLTensor) -> MLTensor {
@@ -413,8 +394,9 @@ extension XLMRoberta {
                     zeros: inputIds.shape,
                     scalarType: Int32.self
                 )
-            let headMask = MLTensor(
-                repeating: 1 as Int32, shape: [numHiddenLayers])
+            // The head mask is always all-ones (equivalent to no masking), so
+            // multiplying attention probs by it every layer is wasted work.
+            // Passing nil skips the per-layer slice and multiply entirely.
             let embeddingOutput = embeddings(
                 inputIds: inputIds,
                 tokenTypeIds: tokenTypeIds,
@@ -422,8 +404,7 @@ extension XLMRoberta {
             )
             let encoderOutput = encoder(
                 hiddenStates: embeddingOutput,
-                attentionMask: extendedAttentionMask(attentionMask),
-                headMask: headMask
+                attentionMask: extendedAttentionMask(attentionMask)
             )
             let pooledOutput: MLTensor? =
                 if let pooler {

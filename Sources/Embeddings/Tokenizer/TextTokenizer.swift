@@ -8,13 +8,19 @@ public protocol TextTokenizer: Sendable {
     func tokenizeText(_ text: String, maxLength: Int?) throws -> [Int32]
     func tokenizeText(_ text: String, maxLength: Int?, addSpecialTokens: Bool) throws -> [Int32]
     func tokenizeTextsPaddingToLongest(
-        _ texts: [String], padTokenId: Int
+        _ texts: [String],
+        padTokenId: Int
     ) throws -> BatchTokenizeResult
     func tokenizeTextsPaddingToLongest(
-        _ texts: [String], padTokenId: Int, maxLength: Int?
+        _ texts: [String],
+        padTokenId: Int,
+        maxLength: Int?
     ) throws -> BatchTokenizeResult
     func tokenizeTextsPaddingToLongest(
-        _ texts: [String], padTokenId: Int, maxLength: Int?, addSpecialTokens: Bool
+        _ texts: [String],
+        padTokenId: Int,
+        maxLength: Int?,
+        addSpecialTokens: Bool
     ) throws -> BatchTokenizeResult
 }
 
@@ -32,7 +38,11 @@ extension TextTokenizer {
         padTokenId: Int
     ) throws -> BatchTokenizeResult {
         try tokenizeTextsPaddingToLongest(
-            texts, padTokenId: padTokenId, maxLength: nil, addSpecialTokens: true)
+            texts,
+            padTokenId: padTokenId,
+            maxLength: nil,
+            addSpecialTokens: true
+        )
     }
 
     public func tokenizeTextsPaddingToLongest(
@@ -41,7 +51,11 @@ extension TextTokenizer {
         maxLength: Int?
     ) throws -> BatchTokenizeResult {
         try tokenizeTextsPaddingToLongest(
-            texts, padTokenId: padTokenId, maxLength: maxLength, addSpecialTokens: true)
+            texts,
+            padTokenId: padTokenId,
+            maxLength: maxLength,
+            addSpecialTokens: true
+        )
     }
 
     public func tokenizeTextsPaddingToLongest(
@@ -71,9 +85,11 @@ extension TextTokenizer {
             attentionMask.append(contentsOf: Array(repeating: 1.0, count: item.count))
             if item.count < longest {
                 tokens.append(
-                    contentsOf: Array(repeating: Int32(padTokenId), count: longest - item.count))
+                    contentsOf: Array(repeating: Int32(padTokenId), count: longest - item.count)
+                )
                 attentionMask.append(
-                    contentsOf: Array(repeating: 0.0, count: longest - item.count))
+                    contentsOf: Array(repeating: 0.0, count: longest - item.count)
+                )
             }
         }
         return BatchTokenizeResult(

@@ -49,7 +49,14 @@ extension XLMRoberta {
             config: config,
             loadConfig: loadConfig
         )
-        return XLMRoberta.ModelBundle(model: model, tokenizer: tokenizer)
+        let defaultEncodeOptions = EncodeOptions.xlmRoberta.applying(
+            try loadSentenceTransformersDefaults(in: modelFolder)
+        )
+        return XLMRoberta.ModelBundle(
+            model: model,
+            tokenizer: tokenizer,
+            defaultEncodeOptions: defaultEncodeOptions
+        )
     }
 
     private static func loadAddedTokens(from modelFolder: URL) async throws -> [String: Int] {
@@ -74,7 +81,9 @@ extension XLMRoberta {
     private static func findSentencePieceModel(in folder: URL) throws -> URL {
         let fileManager = FileManager.default
         let contents = try fileManager.contentsOfDirectory(
-            at: folder, includingPropertiesForKeys: nil)
+            at: folder,
+            includingPropertiesForKeys: nil
+        )
         for url in contents {
             if url.pathExtension == "model", url.lastPathComponent.contains("sentencepiece") {
                 return url
@@ -95,33 +104,48 @@ extension XLMRoberta {
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.word_embeddings.weight")))
+                    "embeddings.word_embeddings.weight"
+                )
+            )
+        )
 
         let tokenTypeEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.token_type_embeddings.weight")))
+                    "embeddings.token_type_embeddings.weight"
+                )
+            )
+        )
 
         let positionEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.position_embeddings.weight")))
+                    "embeddings.position_embeddings.weight"
+                )
+            )
+        )
 
         let layerNorm = try MLTensorUtils.layerNorm(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.LayerNorm.weight")),
+                    "embeddings.LayerNorm.weight"
+                )
+            ),
             bias: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.LayerNorm.bias")),
-            epsilon: config.layerNormEps)
+                    "embeddings.LayerNorm.bias"
+                )
+            ),
+            epsilon: config.layerNormEps
+        )
 
         let embeddings = XLMRoberta.Embeddings(
             wordEmbeddings: wordEmbeddings,
             positionEmbeddings: positionEmbeddings,
             tokenTypeEmbeddings: tokenTypeEmbeddings,
             layerNorm: layerNorm,
-            paddingIndex: Int32(config.padTokenId))
+            paddingIndex: Int32(config.padTokenId)
+        )
 
         var layers = [XLMRoberta.Layer]()
         for layer in 0..<config.numHiddenLayers {
@@ -132,25 +156,39 @@ extension XLMRoberta {
                 query: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.weight")),
+                            "encoder.layer.\(layer).attention.self.query.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.bias"))),
+                            "encoder.layer.\(layer).attention.self.query.bias"
+                        )
+                    )
+                ),
                 key: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.weight")),
+                            "encoder.layer.\(layer).attention.self.key.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.bias")
-                    )),
+                            "encoder.layer.\(layer).attention.self.key.bias"
+                        )
+                    )
+                ),
                 value: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.weight")),
+                            "encoder.layer.\(layer).attention.self.value.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.bias"))),
+                            "encoder.layer.\(layer).attention.self.value.bias"
+                        )
+                    )
+                ),
                 numAttentionHeads: config.numAttentionHeads,
                 attentionHeadSize: attentionHeadSize,
                 allHeadSize: allHeadSize,
@@ -160,18 +198,28 @@ extension XLMRoberta {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.weight")),
+                            "encoder.layer.\(layer).attention.output.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.bias"))),
+                            "encoder.layer.\(layer).attention.output.dense.bias"
+                        )
+                    )
+                ),
                 layerNorm: MLTensorUtils.layerNorm(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.weight")),
+                            "encoder.layer.\(layer).attention.output.LayerNorm.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps)
+                            "encoder.layer.\(layer).attention.output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
             )
             let bertAttention = XLMRoberta.Attention(
                 selfAttention: bertSelfAttention,
@@ -181,29 +229,43 @@ extension XLMRoberta {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.weight")),
+                            "encoder.layer.\(layer).intermediate.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.bias")
-                    ))
+                            "encoder.layer.\(layer).intermediate.dense.bias"
+                        )
+                    )
+                )
             )
             let bertOutput = try XLMRoberta.Output(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.weight")),
-                    bias: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.bias"))),
-                layerNorm: MLTensorUtils.layerNorm(
-                    weight: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.weight")
+                            "encoder.layer.\(layer).output.dense.weight"
+                        )
                     ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps))
+                            "encoder.layer.\(layer).output.dense.bias"
+                        )
+                    )
+                ),
+                layerNorm: MLTensorUtils.layerNorm(
+                    weight: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.weight"
+                        )
+                    ),
+                    bias: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
+            )
 
             let bertLayer = XLMRoberta.Layer(
                 attention: bertAttention,
@@ -219,10 +281,16 @@ extension XLMRoberta {
                         dense: MLTensorUtils.linear(
                             weight: safetensors.mlTensor(
                                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                                    "pooler.dense.weight")),
+                                    "pooler.dense.weight"
+                                )
+                            ),
                             bias: safetensors.mlTensor(
                                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                                    "pooler.dense.bias"))))
+                                    "pooler.dense.bias"
+                                )
+                            )
+                        )
+                    )
                 } else {
                     nil
                 }
@@ -232,17 +300,23 @@ extension XLMRoberta {
                     dense: MLTensorUtils.linear(
                         weight: safetensors.mlTensor(
                             forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "pooler.dense.weight")
+                                "pooler.dense.weight"
+                            )
                         ),
                         bias: safetensors.mlTensor(
                             forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "pooler.dense.bias")))
+                                "pooler.dense.bias"
+                            )
+                        )
+                    )
                 )
             }
 
         return XLMRoberta.Model(
             embeddings: embeddings,
             encoder: XLMRoberta.Encoder(layers: layers),
-            pooler: pooler)
+            pooler: pooler,
+            paddingTokenId: config.padTokenId
+        )
     }
 }

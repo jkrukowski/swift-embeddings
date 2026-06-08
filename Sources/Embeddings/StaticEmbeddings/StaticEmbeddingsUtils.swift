@@ -52,7 +52,8 @@ extension StaticEmbeddings {
     ) throws -> StaticEmbeddings.Model {
         let data = try Safetensors.read(at: weightsUrl)
         let embeddings = try data.mlTensor(
-            forKey: loadConfig.modelConfig.weightKeyTransform("embedding.weight"))
+            forKey: loadConfig.modelConfig.weightKeyTransform("embedding.weight")
+        )
         return StaticEmbeddings.Model(embeddings: embeddings)
     }
 }

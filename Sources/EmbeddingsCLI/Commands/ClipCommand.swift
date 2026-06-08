@@ -14,7 +14,9 @@ struct ClipCommand: AsyncParsableCommand {
 
     func run() async throws {
         let modelBundle = try await Clip.loadModelBundle(from: modelId)
-        let encoded = try modelBundle.encode(text, maxLength: maxLength)
+        var options = modelBundle.defaultEncodeOptions
+        options.maxLength = maxLength
+        let encoded = try modelBundle.encode(text, options: options)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

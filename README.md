@@ -85,7 +85,7 @@ let modelBundle = try await XLMRoberta.loadModelBundle(
 ### Qwen3 (Qwen3 Embedding)
 
 Decoder-only embedding models that use last-token pooling. By default `encode` / `batchEncode` apply
-`.lastTokenPoolAndNormalize`.
+`.lastTokenPool(normalize: true)`.
 Some of the supported models on `Hugging Face`:
 
 - [jkrukowski/Qwen3-Embedding-0.6B-F32](https://huggingface.co/jkrukowski/Qwen3-Embedding-0.6B-F32)
@@ -173,7 +173,7 @@ let modelBundle = try await Bert.loadModelBundle(
 )
 
 // encode text
-let encoded = modelBundle.encode("The cat is black")
+let encoded = try modelBundle.encode("The cat is black")
 let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
 
 // print result
@@ -194,26 +194,68 @@ let texts = [
 let modelBundle = try await Bert.loadModelBundle(
     from: "sentence-transformers/all-MiniLM-L6-v2"
 )
-let encoded = modelBundle.batchEncode(texts)
+let encoded = try modelBundle.batchEncode(texts)
 let distance = cosineDistance(encoded, encoded)
 let result = await distance.cast(to: Float.self).shapedArray(of: Float.self).scalars
 print(result)
 ```
 
-### Compute Policy
+### Encode Options
 
-All transformer and embedding-table model bundles (`Bert`, `Clip`, `Model2Vec`, `ModernBert`,
-`NomicBert`, `Qwen3`, `Roberta`, `StaticEmbeddings`, `XLMRoberta`) accept an optional
-`computePolicy` parameter on `encode` / `batchEncode`. It defaults to `.cpuAndGPU` and controls
-the `MLComputePolicy` used for the underlying `MLTensor` computation:
+The transformer model bundles (`Bert`, `ModernBert`, `NomicBert`, `Qwen3`, `Roberta`,
+`XLMRoberta`, `Clip`) share a single `EncodeOptions` struct on `encode` / `batchEncode`:
+
+- `maxLength` — maximum number of tokens per input sequence.
+- `padTokenId` — padding token id used by `batchEncode` (`nil` uses the model's own id).
+- `postProcess` — how the token-level output is pooled (see below).
+- `computePolicy` — the `MLComputePolicy` for the underlying `MLTensor` work.
+
+When you don't pass `options`, each bundle uses its `defaultEncodeOptions`. These are derived at
+load time from the model's `sentence-transformers` configuration (`modules.json`,
+`*_Pooling/config.json`, the `sentence_*_config.json` transformer config, and the tokenizer's
+`model_max_length`) when present — so a
+`sentence-transformers` model is pooled correctly out of the box (e.g.
+`nomic-ai/nomic-embed-text-v1.5` → `.meanPool(normalize: false)`, `nomic-ai/modernbert-embed-base` →
+`.meanPool(normalize: true)`). For plain checkpoints with no such configuration, the bundle falls
+back to a per-model static default (`.bert`, `.modernBert`, `.nomicBert`, `.qwen3`,
+`.roberta`, `.xlmRoberta`, `.clip`). `Clip` has no `sentence-transformers` layout, so it always
+uses `.clip`.
+
+To override, start from a static default (or `bundle.defaultEncodeOptions`) and set the fields you
+need:
 
 ```swift
-// run on CPU only
-let encoded = try modelBundle.encode("The cat is black", computePolicy: .cpuOnly)
+var options = EncodeOptions.bert
+options.postProcess = .meanPool(normalize: true)
+options.computePolicy = .cpuOnly
+let encoded = try modelBundle.encode("The cat is black", options: options)
 ```
 
-The default `.cpuAndGPU` also works around an occasional crash in the underlying
+#### Pooling (`postProcess`)
+
+- `.clsTokenPool(normalize:)` — use the first (`[CLS]`) token.
+- `.meanPool(normalize:)` — average the (attention-masked) tokens.
+- `.lastTokenPool(normalize:)` — use the last non-padding token.
+- `nil` — return the raw token-level output without pooling.
+
+(`normalize: true` L2-normalizes the pooled embedding.)
+
+When not derived from a `sentence-transformers` config, pooling defaults match each model's
+convention (`.clsTokenPool(normalize: false)` for `Bert` / `Roberta` / `XLMRoberta`,
+`.lastTokenPool(normalize: true)` for `Qwen3`, `nil` for `ModernBert` / `NomicBert`).
+
+#### Compute policy (`computePolicy`)
+
+Defaults to `.cpuAndGPU`, which also works around an occasional crash in the underlying
 `BNNS` matmul implementation, see more [here](https://github.com/jkrukowski/swift-embeddings/issues/17).
+Use `.cpuOnly` if you observe high memory usage.
+
+`Clip` also uses `EncodeOptions`, but its pooling is fixed (EOS token → projection → L2
+normalize), so `postProcess` is ignored.
+
+The embedding-table bundles (`Model2Vec`, `StaticEmbeddings`) take their relevant
+parameters (`normalize`, `truncateDimension`, `maxLength`, `computePolicy`) directly on
+`encode` / `batchEncode`.
 
 ## Command Line Demo
 
@@ -247,6 +289,29 @@ Command line options:
 --max-length <max-length>                   Maximum length of the input (not for `Word2Vec`)
 -h, --help                                  Show help information.
 ```
+
+## Tests
+
+Run the unit tests with:
+
+```bash
+swift test
+```
+
+The accuracy tests compare the `Swift` output against a `Python`/`transformers` reference.
+They are skipped unless `UV_PATH` points at a [`uv`](https://github.com/astral-sh/uv) binary
+(used to run the reference script). Run them with `--no-parallel`, since running multiple
+model forward passes concurrently can crash the underlying `MLTensor`/`BNNS` matmul:
+
+```bash
+PYTORCH_ENABLE_MPS_FALLBACK=1 UV_PATH=$(which uv) CI_DISABLE_NETWORK_MONITOR=1 \
+    swift test --no-parallel --filter AccuracyTests
+```
+
+- `PYTORCH_ENABLE_MPS_FALLBACK=1` lets the `PyTorch` reference fall back to CPU for ops
+  unsupported on `MPS`.
+- `CI_DISABLE_NETWORK_MONITOR=1` disables the network monitor (models are downloaded
+  before the comparison runs).
 
 ## Benchmarks
 

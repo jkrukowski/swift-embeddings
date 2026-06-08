@@ -18,10 +18,12 @@ let package = Package(
         ),
         .library(
             name: "Embeddings",
-            targets: ["Embeddings"]),
+            targets: ["Embeddings"]
+        ),
         .library(
             name: "MLTensorUtils",
-            targets: ["MLTensorUtils"]),
+            targets: ["MLTensorUtils"]
+        ),
     ],
     dependencies: [
         .package(

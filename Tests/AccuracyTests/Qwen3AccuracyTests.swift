@@ -17,10 +17,12 @@ struct Qwen3AccuracyTests {
             from: Utils.ModelId.qwen3Embedding,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.encode(text, postProcess: .lastTokenPoolAndNormalize)
+        let encoded = try modelBundle.encode(text)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.qwen3Embedding, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.qwen3Embedding,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [text],
@@ -37,11 +39,12 @@ struct Qwen3AccuracyTests {
             from: Utils.ModelId.qwen3Embedding,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.batchEncode(
-            Utils.batchTextsToTests, postProcess: .lastTokenPoolAndNormalize)
+        let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.qwen3Embedding, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.qwen3Embedding,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: Utils.batchTextsToTests,

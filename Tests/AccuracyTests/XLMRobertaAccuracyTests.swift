@@ -21,7 +21,9 @@ struct XLMRobertaAccuracyTests {
         let encoded = try modelBundle.encode(text)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.xlmRoberta, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.xlmRoberta,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [text],
@@ -42,7 +44,9 @@ struct XLMRobertaAccuracyTests {
         let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.xlmRoberta, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.xlmRoberta,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: Utils.batchTextsToTests,

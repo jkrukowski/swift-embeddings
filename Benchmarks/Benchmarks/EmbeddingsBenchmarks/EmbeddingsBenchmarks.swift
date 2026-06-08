@@ -83,7 +83,8 @@ let benchmarks: @Sendable () -> Void = {
     } setup: {
         try await ModernBert.loadModelBundle(
             from: ModelId.modernBert,
-            loadConfig: .addWeightKeyPrefix("model."))
+            loadConfig: .addWeightKeyPrefix("model.")
+        )
     }
 
     Benchmark("Encode (NomicBert)") { benchmark, bundle in
@@ -101,7 +102,8 @@ let benchmarks: @Sendable () -> Void = {
     } setup: {
         try await XLMRoberta.loadModelBundle(
             from: ModelId.xlmRoberta,
-            loadConfig: .addWeightKeyPrefix("roberta."))
+            loadConfig: .addWeightKeyPrefix("roberta.")
+        )
     }
 
     Benchmark("Encode (Roberta)") { benchmark, bundle in
@@ -111,7 +113,8 @@ let benchmarks: @Sendable () -> Void = {
     } setup: {
         try await Roberta.loadModelBundle(
             from: ModelId.roberta,
-            loadConfig: .addWeightKeyPrefix("roberta."))
+            loadConfig: .addWeightKeyPrefix("roberta.")
+        )
     }
 
     Benchmark("Encode (Clip)") { benchmark, bundle in
@@ -137,6 +140,7 @@ let benchmarks: @Sendable () -> Void = {
     } setup: {
         try await StaticEmbeddings.loadModelBundle(
             from: ModelId.staticEmbeddings,
-            loadConfig: .staticEmbeddings)
+            loadConfig: .staticEmbeddings
+        )
     }
 }

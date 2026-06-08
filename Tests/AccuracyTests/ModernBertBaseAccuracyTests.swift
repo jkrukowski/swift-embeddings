@@ -18,10 +18,14 @@ struct ModernBertBaseAccuracyTests {
             downloadBase: Utils.modelPath,
             loadConfig: .addWeightKeyPrefix("model.")
         )
-        let encoded = try modelBundle.encode(text, postProcess: .meanPool)
+        var options = EncodeOptions.modernBert
+        options.postProcess = .meanPool(normalize: false)
+        let encoded = try modelBundle.encode(text, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.modernBertBase, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.modernBertBase,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [text],
@@ -39,10 +43,14 @@ struct ModernBertBaseAccuracyTests {
             downloadBase: Utils.modelPath,
             loadConfig: .addWeightKeyPrefix("model.")
         )
-        let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests, postProcess: .meanPool)
+        var options = EncodeOptions.modernBert
+        options.postProcess = .meanPool(normalize: false)
+        let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.modernBertBase, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.modernBertBase,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: Utils.batchTextsToTests,

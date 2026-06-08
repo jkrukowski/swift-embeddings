@@ -371,47 +371,59 @@ extension Bert {
     public struct ModelBundle: Sendable {
         public let model: Bert.Model
         public let tokenizer: any TextTokenizer
+        public let defaultEncodeOptions: EncodeOptions
 
         public init(
             model: Bert.Model,
-            tokenizer: any TextTokenizer
+            tokenizer: any TextTokenizer,
+            defaultEncodeOptions: EncodeOptions = .bert
         ) {
             self.model = model
             self.tokenizer = tokenizer
+            self.defaultEncodeOptions = defaultEncodeOptions
         }
 
         public func encode(
             _ text: String,
-            maxLength: Int = 512,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
-                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: options.maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds: inputIds)
-                return result.sequenceOutput[0..., 0, 0...]
+                return processResult(result.sequenceOutput, with: options.postProcess)
             }
         }
 
         public func batchEncode(
             _ texts: [String],
-            padTokenId: Int = 0,
-            maxLength: Int = 512,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                    texts,
+                    padTokenId: options.padTokenId ?? 0,
+                    maxLength: options.maxLength
+                )
                 let inputIds = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.tokens)
+                    scalars: batchTokenizeResult.tokens
+                )
                 let attentionMask = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.attentionMask)
-                return model(
+                    scalars: batchTokenizeResult.attentionMask
+                )
+                let result = model(
                     inputIds: inputIds,
                     attentionMask: attentionMask
-                ).sequenceOutput[0..., 0, 0...]
+                )
+                return processResult(
+                    result.sequenceOutput,
+                    with: options.postProcess,
+                    attentionMask: attentionMask
+                )
             }
         }
     }

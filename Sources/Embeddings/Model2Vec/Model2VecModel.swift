@@ -35,7 +35,11 @@ extension Model2Vec {
             computePolicy: MLComputePolicy = .cpuAndGPU
         ) throws -> MLTensor {
             try batchEncode(
-                [text], normalize: normalize, maxLength: maxLength, computePolicy: computePolicy)
+                [text],
+                normalize: normalize,
+                maxLength: maxLength,
+                computePolicy: computePolicy
+            )
         }
 
         public func batchEncode(
@@ -56,7 +60,8 @@ extension Model2Vec {
                     }
                 }
                 let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(
-                    to: Float.self)
+                    to: Float.self
+                )
                 if normalize {
                     let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
                     return embeddings / norm
@@ -71,7 +76,10 @@ extension Model2Vec {
             maxLength: Int?
         ) throws -> MLTensor? {
             let tokensIds = try tokenizer.tokenizeText(
-                text, maxLength: maxLength, addSpecialTokens: false)
+                text,
+                maxLength: maxLength,
+                addSpecialTokens: false
+            )
             let tokens =
                 if let unknownTokenId = tokenizer.unknownTokenId {
                     tokensIds.filter { $0 != unknownTokenId }

@@ -286,7 +286,9 @@ extension ModernBert {
 
             // Broadcast to full shape by adding with zero tensor
             let broadcastZero = MLTensor(
-                zeros: [batchSize, 1, seqLen, seqLen], scalarType: Float.self)
+                zeros: [batchSize, 1, seqLen, seqLen],
+                scalarType: Float.self
+            )
             let globalAttentionMask = broadcastZero + additiveMask4D
 
             // Create sliding window mask
@@ -337,47 +339,56 @@ extension ModernBert {
     public struct ModelBundle: Sendable {
         public let model: ModernBert.Model
         public let tokenizer: any TextTokenizer
+        public let defaultEncodeOptions: EncodeOptions
 
         public init(
             model: ModernBert.Model,
-            tokenizer: any TextTokenizer
+            tokenizer: any TextTokenizer,
+            defaultEncodeOptions: EncodeOptions = .modernBert
         ) {
             self.model = model
             self.tokenizer = tokenizer
+            self.defaultEncodeOptions = defaultEncodeOptions
         }
 
         public func encode(
             _ text: String,
-            maxLength: Int = 8192,
-            postProcess: PostProcess? = nil,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
-                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: options.maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds)
-                return processResult(result, with: postProcess)
+                return processResult(result, with: options.postProcess)
             }
         }
 
         public func batchEncode(
             _ texts: [String],
-            padTokenId: Int = 50283,
-            maxLength: Int = 8192,
-            postProcess: PostProcess? = nil,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                    texts,
+                    padTokenId: options.padTokenId ?? 50283,
+                    maxLength: options.maxLength
+                )
                 let inputIds = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.tokens)
+                    scalars: batchTokenizeResult.tokens
+                )
                 let attentionMask = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.attentionMask)
+                    scalars: batchTokenizeResult.attentionMask
+                )
                 let result = model(inputIds, attentionMask: attentionMask)
-                return processResult(result, with: postProcess, attentionMask: attentionMask)
+                return processResult(
+                    result,
+                    with: options.postProcess,
+                    attentionMask: attentionMask
+                )
             }
         }
     }

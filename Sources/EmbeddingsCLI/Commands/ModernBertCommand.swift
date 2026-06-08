@@ -10,14 +10,21 @@ struct ModernBertCommand: AsyncParsableCommand {
     )
     @Option var modelId: String = "answerdotai/ModernBERT-base"
     @Option var text: String = "Text to encode"
-    @Option var maxLength: Int = 512
+    @Option var maxLength: Int?
 
     func run() async throws {
         let modelBundle = try await ModernBert.loadModelBundle(
             from: modelId,
             loadConfig: .addWeightKeyPrefix("model.")
         )
-        let encoded = try modelBundle.encode(text, maxLength: maxLength, postProcess: .meanPool)
+        var options = modelBundle.defaultEncodeOptions
+        if let maxLength {
+            options.maxLength = maxLength
+        }
+        if options.postProcess == nil {
+            options.postProcess = .meanPool(normalize: false)
+        }
+        let encoded = try modelBundle.encode(text, options: options)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

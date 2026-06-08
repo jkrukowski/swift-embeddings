@@ -20,7 +20,10 @@ import TestingUtils
     #expect(result3 == [-1])
 
     let input4 = MLTensor(
-        shape: [6], scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9], scalarType: Float.self)
+        shape: [6],
+        scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9],
+        scalarType: Float.self
+    )
     let result4 = await erf(input4).shapedArray(of: Float.self).scalars
     let expected4: [Float] = [
         0.7969082124228322,
@@ -48,7 +51,10 @@ import TestingUtils
     #expect(result3 == [0])
 
     let input4 = MLTensor(
-        shape: [6], scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9], scalarType: Float.self)
+        shape: [6],
+        scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9],
+        scalarType: Float.self
+    )
     let result4 = await gelu(input4).shapedArray(of: Float.self).scalars
     let expected4: [Float] = [
         0.734346, 0.345731, 0.0539828, -0.0460172, -0.154269, -0.165654,
@@ -71,7 +77,10 @@ import TestingUtils
     #expect(result3 == [0])
 
     let input4 = MLTensor(
-        shape: [6], scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9], scalarType: Float.self)
+        shape: [6],
+        scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9],
+        scalarType: Float.self
+    )
     let result4 = await gelu(input4, approximation: .fast).shapedArray(of: Float.self).scalars
     let expected4: [Float] = [
         0.740043, 0.350388, 0.0542448, -0.0457552, -0.149612, -0.159957,
@@ -94,7 +103,10 @@ import TestingUtils
     #expect(result3 == [0])
 
     let input4 = MLTensor(
-        shape: [6], scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9], scalarType: Float.self)
+        shape: [6],
+        scalars: [0.9, 0.5, 0.1, -0.1, -0.5, -0.9],
+        scalarType: Float.self
+    )
     let result4 = await gelu(input4, approximation: .precise).shapedArray(of: Float.self).scalars
     let expected4: [Float] = [
         0.734228, 0.345714, 0.0539828, -0.0460172, -0.154286, -0.165772,

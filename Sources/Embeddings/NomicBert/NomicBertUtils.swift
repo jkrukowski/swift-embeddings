@@ -47,9 +47,13 @@ extension NomicBert {
             config: config,
             loadConfig: loadConfig
         )
+        let defaultEncodeOptions = EncodeOptions.nomicBert.applying(
+            try loadSentenceTransformersDefaults(in: modelFolder)
+        )
         return NomicBert.ModelBundle(
             model: model,
-            tokenizer: TokenizerWrapper(tokenizer)
+            tokenizer: TokenizerWrapper(tokenizer),
+            defaultEncodeOptions: defaultEncodeOptions
         )
     }
 }
@@ -77,19 +81,28 @@ extension NomicBert {
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.word_embeddings.weight")))
+                    "embeddings.word_embeddings.weight"
+                )
+            )
+        )
 
         let tokenTypeEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.token_type_embeddings.weight")))
+                    "embeddings.token_type_embeddings.weight"
+                )
+            )
+        )
 
         let positionEmbeddings: MLTensorUtils.Layer? =
             if config.rotaryEmbFraction <= 0 {
                 try MLTensorUtils.embedding(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "embeddings.position_embeddings.weight")))
+                            "embeddings.position_embeddings.weight"
+                        )
+                    )
+                )
             } else {
                 nil
             }
@@ -97,14 +110,18 @@ extension NomicBert {
         let embeddings = NomicBert.Embeddings(
             wordEmbeddings: wordEmbeddings,
             positionEmbeddings: positionEmbeddings,
-            tokenTypeEmbeddings: tokenTypeEmbeddings)
+            tokenTypeEmbeddings: tokenTypeEmbeddings
+        )
 
         let embNorm = try MLTensorUtils.layerNorm(
             weight: safetensors.mlTensor(
-                forKey: loadConfig.modelConfig.weightKeyTransform("emb_ln.weight")),
+                forKey: loadConfig.modelConfig.weightKeyTransform("emb_ln.weight")
+            ),
             bias: safetensors.mlTensor(
-                forKey: loadConfig.modelConfig.weightKeyTransform("emb_ln.bias")),
-            epsilon: config.layerNormEpsilon)
+                forKey: loadConfig.modelConfig.weightKeyTransform("emb_ln.bias")
+            ),
+            epsilon: config.layerNormEpsilon
+        )
 
         let headDim = config.hiddenSize / config.numAttentionHeads
         let rotaryDim = max(0, Int(Float(headDim) * config.rotaryEmbFraction))
@@ -121,28 +138,38 @@ extension NomicBert {
         for layerId in 0..<config.numHiddenLayers {
             let wqkvWeight = try safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).attn.Wqkv.weight"))
+                    "encoder.layers.\(layerId).attn.Wqkv.weight"
+                )
+            )
             let wqkv: MLTensorUtils.Layer =
                 if config.qkvProjBias {
                     try MLTensorUtils.linear(
                         weight: wqkvWeight,
                         bias: safetensors.mlTensor(
                             forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "encoder.layers.\(layerId).attn.Wqkv.bias")))
+                                "encoder.layers.\(layerId).attn.Wqkv.bias"
+                            )
+                        )
+                    )
                 } else {
                     MLTensorUtils.linear(weight: wqkvWeight)
                 }
 
             let woWeight = try safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).attn.out_proj.weight"))
+                    "encoder.layers.\(layerId).attn.out_proj.weight"
+                )
+            )
             let wo: MLTensorUtils.Layer =
                 if config.qkvProjBias {
                     try MLTensorUtils.linear(
                         weight: woWeight,
                         bias: safetensors.mlTensor(
                             forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "encoder.layers.\(layerId).attn.out_proj.bias")))
+                                "encoder.layers.\(layerId).attn.out_proj.bias"
+                            )
+                        )
+                    )
                 } else {
                     MLTensorUtils.linear(weight: woWeight)
                 }
@@ -159,26 +186,38 @@ extension NomicBert {
             let norm1 = try MLTensorUtils.layerNorm(
                 weight: safetensors.mlTensor(
                     forKey: loadConfig.modelConfig.weightKeyTransform(
-                        "encoder.layers.\(layerId).norm1.weight")),
+                        "encoder.layers.\(layerId).norm1.weight"
+                    )
+                ),
                 bias: safetensors.mlTensor(
                     forKey: loadConfig.modelConfig.weightKeyTransform(
-                        "encoder.layers.\(layerId).norm1.bias")),
-                epsilon: config.layerNormEpsilon)
+                        "encoder.layers.\(layerId).norm1.bias"
+                    )
+                ),
+                epsilon: config.layerNormEpsilon
+            )
 
             let norm2 = try MLTensorUtils.layerNorm(
                 weight: safetensors.mlTensor(
                     forKey: loadConfig.modelConfig.weightKeyTransform(
-                        "encoder.layers.\(layerId).norm2.weight")),
+                        "encoder.layers.\(layerId).norm2.weight"
+                    )
+                ),
                 bias: safetensors.mlTensor(
                     forKey: loadConfig.modelConfig.weightKeyTransform(
-                        "encoder.layers.\(layerId).norm2.bias")),
-                epsilon: config.layerNormEpsilon)
+                        "encoder.layers.\(layerId).norm2.bias"
+                    )
+                ),
+                epsilon: config.layerNormEpsilon
+            )
 
             let gateUpBias: MLTensor? =
                 if config.mlpFc1Bias {
                     try? safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layers.\(layerId).mlp.gate_up_proj.bias"))
+                            "encoder.layers.\(layerId).mlp.gate_up_proj.bias"
+                        )
+                    )
                 } else {
                     nil
                 }
@@ -186,18 +225,23 @@ extension NomicBert {
             let gateUpBiasResolved: MLTensor?
             if let combined = try? safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).mlp.gate_up_proj.weight"))
-            {
+                    "encoder.layers.\(layerId).mlp.gate_up_proj.weight"
+                )
+            ) {
                 gateUpWeightResolved = combined
                 gateUpBiasResolved = gateUpBias
             } else {
                 guard
                     let fc11 = try? safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layers.\(layerId).mlp.fc11.weight")),
+                            "encoder.layers.\(layerId).mlp.fc11.weight"
+                        )
+                    ),
                     let fc12 = try? safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layers.\(layerId).mlp.fc12.weight"))
+                            "encoder.layers.\(layerId).mlp.fc12.weight"
+                        )
+                    )
                 else {
                     throw EmbeddingsError.invalidFile
                 }
@@ -214,13 +258,15 @@ extension NomicBert {
             let downWeight: MLTensor
             if let weight = try? safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).mlp.down_proj.weight"))
-            {
+                    "encoder.layers.\(layerId).mlp.down_proj.weight"
+                )
+            ) {
                 downWeight = weight
             } else if let weight = try? safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "encoder.layers.\(layerId).mlp.fc2.weight"))
-            {
+                    "encoder.layers.\(layerId).mlp.fc2.weight"
+                )
+            ) {
                 downWeight = weight
             } else {
                 throw EmbeddingsError.invalidFile
@@ -231,7 +277,10 @@ extension NomicBert {
                         weight: downWeight,
                         bias: safetensors.mlTensor(
                             forKey: loadConfig.modelConfig.weightKeyTransform(
-                                "encoder.layers.\(layerId).mlp.down_proj.bias")))
+                                "encoder.layers.\(layerId).mlp.down_proj.bias"
+                            )
+                        )
+                    )
                 } else {
                     MLTensorUtils.linear(weight: downWeight)
                 }

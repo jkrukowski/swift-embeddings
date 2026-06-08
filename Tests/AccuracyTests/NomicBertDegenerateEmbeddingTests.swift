@@ -25,11 +25,10 @@ struct NomicBertDegenerateEmbeddingTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.batchEncode(
-            texts,
-            postProcess: .meanPool,
-            computePolicy: .cpuOnly
-        )
+        var options = EncodeOptions.nomicBert
+        options.postProcess = .meanPool(normalize: false)
+        options.computePolicy = .cpuOnly
+        let encoded = try modelBundle.batchEncode(texts, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let swiftEmbeddings = try reshape(
             data: swiftData,
@@ -39,7 +38,9 @@ struct NomicBertDegenerateEmbeddingTests {
         )
 
         let modelPath = modelPath(
-            modelId: Utils.ModelId.nomicEmbedTextV15, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.nomicEmbedTextV15,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: texts,
@@ -100,9 +101,15 @@ struct NomicBertDegenerateEmbeddingTests {
             for j in (i + 1)..<embeddings.count {
                 let isIdentical = embeddings[i].elementsEqual(embeddings[j])
                 let a = MLTensor(
-                    shape: [1, embeddings[i].count], scalars: embeddings[i], scalarType: Float.self)
+                    shape: [1, embeddings[i].count],
+                    scalars: embeddings[i],
+                    scalarType: Float.self
+                )
                 let b = MLTensor(
-                    shape: [1, embeddings[j].count], scalars: embeddings[j], scalarType: Float.self)
+                    shape: [1, embeddings[j].count],
+                    scalars: embeddings[j],
+                    scalarType: Float.self
+                )
                 let similarityTensor = MLTensorUtils.cosineSimilarity(a, b)
                 let similarity = await similarityTensor.shapedArray(of: Float.self).scalars[0]
                 if isIdentical || similarity > Self.suspiciousThreshold {

@@ -10,12 +10,15 @@ struct Qwen3Command: AsyncParsableCommand {
     )
     @Option var modelId: String = "jkrukowski/Qwen3-Embedding-0.6B-F32"
     @Option var text: String = "Text to encode"
-    @Option var maxLength: Int = 512
+    @Option var maxLength: Int?
 
     func run() async throws {
         let modelBundle = try await Qwen3.loadModelBundle(from: modelId)
-        let encoded = try modelBundle.encode(
-            text, maxLength: maxLength, postProcess: .lastTokenPoolAndNormalize)
+        var options = modelBundle.defaultEncodeOptions
+        if let maxLength {
+            options.maxLength = maxLength
+        }
+        let encoded = try modelBundle.encode(text, options: options)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

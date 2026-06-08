@@ -282,22 +282,27 @@ extension Clip {
     public struct ModelBundle: Sendable {
         public let textModel: Clip.TextModel
         public let tokenizer: any TextTokenizer
+        public let defaultEncodeOptions: EncodeOptions
 
         public init(
             textModel: Clip.TextModel,
-            tokenizer: any TextTokenizer
+            tokenizer: any TextTokenizer,
+            defaultEncodeOptions: EncodeOptions = .clip
         ) {
             self.textModel = textModel
             self.tokenizer = tokenizer
+            self.defaultEncodeOptions = defaultEncodeOptions
         }
 
+        // Clip pooling is fixed (EOS token -> textProjection -> L2 normalize), so
+        // `options.postProcess` is intentionally ignored.
         public func encode(
             _ text: String,
-            maxLength: Int = 77,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
-                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: options.maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let modelOutput = textModel(inputIds: inputIds)
                 let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
@@ -307,16 +312,19 @@ extension Clip {
 
         public func batchEncode(
             _ texts: [String],
-            padTokenId: Int = 0,
-            maxLength: Int = 77,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                    texts,
+                    padTokenId: options.padTokenId ?? 0,
+                    maxLength: options.maxLength
+                )
                 let inputIds = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.tokens)
+                    scalars: batchTokenizeResult.tokens
+                )
                 let modelOutput = textModel(inputIds: inputIds)
                 let textEmbeddings = textModel.textProjection(modelOutput.poolerOutput)
                 return textEmbeddings / norm(textEmbeddings, alongAxes: -1, keepRank: true)

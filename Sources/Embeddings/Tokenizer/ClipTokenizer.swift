@@ -50,7 +50,8 @@ final class ClipTokenizer: Sendable {
         if let maxLength {
             if addSpecialTokens {
                 precondition(
-                    maxLength >= 2, "maxLength must be at least 2 to accommodate BOS and EOS tokens"
+                    maxLength >= 2,
+                    "maxLength must be at least 2 to accommodate BOS and EOS tokens"
                 )
                 // Truncate to maxLength - 2 to make space for bos and eos tokens
                 result.append(contentsOf: tokenIds.prefix(maxLength - 2))
@@ -69,11 +70,13 @@ final class ClipTokenizer: Sendable {
             if let maxLength {
                 if padToLength <= maxLength {
                     result.append(
-                        contentsOf: Array(repeating: 0, count: padToLength - result.count))
+                        contentsOf: Array(repeating: 0, count: padToLength - result.count)
+                    )
                 }
             } else {
                 result.append(
-                    contentsOf: Array(repeating: 0, count: padToLength - result.count))
+                    contentsOf: Array(repeating: 0, count: padToLength - result.count)
+                )
             }
         }
         return result
@@ -148,7 +151,8 @@ extension ClipTokenizer: TextTokenizer {
 func loadClipTokenizer(at url: URL) throws -> ClipTokenizer {
     let mergesData = try String(
         contentsOf: url.appendingPathComponent("merges.txt"),
-        encoding: .utf8)
+        encoding: .utf8
+    )
     let merges = mergesData.split(separator: "\n").dropFirst()
     var bpeRanks = [Pair<String>: Int]()
     for (index, line) in merges.enumerated() {
@@ -159,7 +163,8 @@ func loadClipTokenizer(at url: URL) throws -> ClipTokenizer {
         bpeRanks[Pair(first: pair[0], second: pair[1])] = index
     }
     let vocabData = try JSONSerialization.jsonObject(
-        with: Data(contentsOf: url.appendingPathComponent("vocab.json")))
+        with: Data(contentsOf: url.appendingPathComponent("vocab.json"))
+    )
     guard let vocab = vocabData as? [String: Int] else {
         fatalError("Malformed vocab data")
     }

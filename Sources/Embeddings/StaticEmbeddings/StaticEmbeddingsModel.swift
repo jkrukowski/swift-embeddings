@@ -60,7 +60,8 @@ extension StaticEmbeddings {
                     }
                 }
                 let embeddings = MLTensor(stacking: embeddingsBatch, alongAxis: 0).cast(
-                    to: Float.self)
+                    to: Float.self
+                )
                 if normalize {
                     let norm = norm(embeddings, alongAxes: 1, keepRank: true) + Float.ulpOfOne
                     return embeddings / norm
@@ -75,7 +76,10 @@ extension StaticEmbeddings {
             maxLength: Int?
         ) throws -> MLTensor? {
             let tokens = try tokenizer.tokenizeText(
-                text, maxLength: maxLength, addSpecialTokens: false)
+                text,
+                maxLength: maxLength,
+                addSpecialTokens: false
+            )
             return tokens.isEmpty ? nil : MLTensor(shape: [tokens.count], scalars: tokens)
         }
     }

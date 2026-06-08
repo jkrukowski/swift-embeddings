@@ -13,19 +13,24 @@ public func sdpa(
 ) -> MLTensor {
     precondition(
         query.rank >= 2,
-        "query must have at least 2 dimensions, got shape \(query.shape)")
+        "query must have at least 2 dimensions, got shape \(query.shape)"
+    )
     precondition(
         key.rank >= 2,
-        "key must have at least 2 dimensions, got shape \(key.shape)")
+        "key must have at least 2 dimensions, got shape \(key.shape)"
+    )
     precondition(
         value.rank >= 2,
-        "value must have at least 2 dimensions, got shape \(value.shape)")
+        "value must have at least 2 dimensions, got shape \(value.shape)"
+    )
     precondition(
         query.rank == key.rank,
-        "query and key must have the same rank, got query: \(query.rank), key: \(key.rank)")
+        "query and key must have the same rank, got query: \(query.rank), key: \(key.rank)"
+    )
     precondition(
         key.rank == value.rank,
-        "key and value must have the same rank, got key: \(key.rank), value: \(value.rank)")
+        "key and value must have the same rank, got key: \(key.rank), value: \(value.rank)"
+    )
 
     let L = query.shape[query.shape.count - 2]
     let S = key.shape[key.shape.count - 2]

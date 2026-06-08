@@ -47,7 +47,14 @@ extension Bert {
             config: config,
             loadConfig: loadConfig
         )
-        return Bert.ModelBundle(model: model, tokenizer: TokenizerWrapper(tokenizer))
+        let defaultEncodeOptions = EncodeOptions.bert.applying(
+            try loadSentenceTransformersDefaults(in: modelFolder)
+        )
+        return Bert.ModelBundle(
+            model: model,
+            tokenizer: TokenizerWrapper(tokenizer),
+            defaultEncodeOptions: defaultEncodeOptions
+        )
     }
 }
 
@@ -74,37 +81,54 @@ extension Bert {
         let pooler = try Bert.Pooler(
             dense: MLTensorUtils.linear(
                 weight: safetensors.mlTensor(
-                    forKey: loadConfig.modelConfig.weightKeyTransform("pooler.dense.weight")),
+                    forKey: loadConfig.modelConfig.weightKeyTransform("pooler.dense.weight")
+                ),
                 bias: safetensors.mlTensor(
-                    forKey: loadConfig.modelConfig.weightKeyTransform("pooler.dense.bias"))))
+                    forKey: loadConfig.modelConfig.weightKeyTransform("pooler.dense.bias")
+                )
+            )
+        )
 
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.word_embeddings.weight")))
+                    "embeddings.word_embeddings.weight"
+                )
+            )
+        )
 
         let tokenTypeEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.token_type_embeddings.weight")))
+                    "embeddings.token_type_embeddings.weight"
+                )
+            )
+        )
 
         let positionEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.position_embeddings.weight")))
+                    "embeddings.position_embeddings.weight"
+                )
+            )
+        )
 
         let layerNorm = try MLTensorUtils.layerNorm(
             weight: safetensors.mlTensor(
-                forKey: loadConfig.modelConfig.weightKeyTransform("embeddings.LayerNorm.weight")),
+                forKey: loadConfig.modelConfig.weightKeyTransform("embeddings.LayerNorm.weight")
+            ),
             bias: safetensors.mlTensor(
-                forKey: loadConfig.modelConfig.weightKeyTransform("embeddings.LayerNorm.bias")),
-            epsilon: config.layerNormEps)
+                forKey: loadConfig.modelConfig.weightKeyTransform("embeddings.LayerNorm.bias")
+            ),
+            epsilon: config.layerNormEps
+        )
 
         let embeddings = Bert.Embeddings(
             wordEmbeddings: wordEmbeddings,
             positionEmbeddings: positionEmbeddings,
             tokenTypeEmbeddings: tokenTypeEmbeddings,
-            layerNorm: layerNorm)
+            layerNorm: layerNorm
+        )
 
         var layers = [Bert.Layer]()
         for layer in 0..<config.numHiddenLayers {
@@ -112,25 +136,39 @@ extension Bert {
                 query: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.weight")),
+                            "encoder.layer.\(layer).attention.self.query.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.bias"))),
+                            "encoder.layer.\(layer).attention.self.query.bias"
+                        )
+                    )
+                ),
                 key: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.weight")),
+                            "encoder.layer.\(layer).attention.self.key.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.bias")
-                    )),
+                            "encoder.layer.\(layer).attention.self.key.bias"
+                        )
+                    )
+                ),
                 value: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.weight")),
+                            "encoder.layer.\(layer).attention.self.value.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.bias"))),
+                            "encoder.layer.\(layer).attention.self.value.bias"
+                        )
+                    )
+                ),
                 numAttentionHeads: config.numAttentionHeads,
                 attentionHeadSize: config.hiddenSize / config.numAttentionHeads,
                 allHeadSize: config.numAttentionHeads
@@ -140,18 +178,28 @@ extension Bert {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.weight")),
+                            "encoder.layer.\(layer).attention.output.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.bias"))),
+                            "encoder.layer.\(layer).attention.output.dense.bias"
+                        )
+                    )
+                ),
                 layerNorm: MLTensorUtils.layerNorm(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.weight")),
+                            "encoder.layer.\(layer).attention.output.LayerNorm.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps)
+                            "encoder.layer.\(layer).attention.output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
             )
             let bertAttention = Bert.Attention(
                 selfAttention: bertSelfAttention,
@@ -161,29 +209,43 @@ extension Bert {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.weight")),
+                            "encoder.layer.\(layer).intermediate.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.bias")
-                    ))
+                            "encoder.layer.\(layer).intermediate.dense.bias"
+                        )
+                    )
+                )
             )
             let bertOutput = try Bert.Output(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.weight")),
-                    bias: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.bias"))),
-                layerNorm: MLTensorUtils.layerNorm(
-                    weight: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.weight")
+                            "encoder.layer.\(layer).output.dense.weight"
+                        )
                     ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps))
+                            "encoder.layer.\(layer).output.dense.bias"
+                        )
+                    )
+                ),
+                layerNorm: MLTensorUtils.layerNorm(
+                    weight: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.weight"
+                        )
+                    ),
+                    bias: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
+            )
 
             let bertLayer = Bert.Layer(
                 attention: bertAttention,
@@ -195,6 +257,7 @@ extension Bert {
         return Bert.Model(
             embeddings: embeddings,
             encoder: Bert.Encoder(layers: layers),
-            pooler: pooler)
+            pooler: pooler
+        )
     }
 }

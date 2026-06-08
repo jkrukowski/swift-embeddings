@@ -17,10 +17,14 @@ struct ModernBertNomicAccuracyTests {
             from: Utils.ModelId.modernBertNomic,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.encode(text, postProcess: .meanPoolAndNormalize)
+        var options = EncodeOptions.modernBert
+        options.postProcess = .meanPool(normalize: true)
+        let encoded = try modelBundle.encode(text, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.modernBertNomic, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.modernBertNomic,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [text],
@@ -37,11 +41,14 @@ struct ModernBertNomicAccuracyTests {
             from: Utils.ModelId.modernBertNomic,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.batchEncode(
-            Utils.batchTextsToTests, postProcess: .meanPoolAndNormalize)
+        var options = EncodeOptions.modernBert
+        options.postProcess = .meanPool(normalize: true)
+        let encoded = try modelBundle.batchEncode(Utils.batchTextsToTests, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.modernBertNomic, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.modernBertNomic,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: Utils.batchTextsToTests,

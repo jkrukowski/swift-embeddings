@@ -63,7 +63,8 @@ extension Model2Vec {
     ) throws -> Model2Vec.Model {
         let data = try Safetensors.read(at: weightsUrl)
         let embeddings = try data.mlTensor(
-            forKey: loadConfig.modelConfig.weightKeyTransform("embeddings"))
+            forKey: loadConfig.modelConfig.weightKeyTransform("embeddings")
+        )
         return Model2Vec.Model(embeddings: embeddings, normalize: normalize)
     }
 }

@@ -47,9 +47,13 @@ extension Qwen3 {
             config: config,
             loadConfig: loadConfig
         )
+        let defaultEncodeOptions = EncodeOptions.qwen3.applying(
+            try loadSentenceTransformersDefaults(in: modelFolder)
+        )
         return Qwen3.ModelBundle(
             model: model,
-            tokenizer: TokenizerWrapper(tokenizer)
+            tokenizer: TokenizerWrapper(tokenizer),
+            defaultEncodeOptions: defaultEncodeOptions
         )
     }
 }
@@ -71,14 +75,16 @@ extension Qwen3 {
             if config.attentionBias {
                 try MLTensorUtils.linear(
                     weight: weight("\(key).weight"),
-                    bias: weight("\(key).bias"))
+                    bias: weight("\(key).bias")
+                )
             } else {
                 MLTensorUtils.linear(weight: try weight("\(key).weight"))
             }
         }
 
         let embedTokens = try MLTensorUtils.embedding(
-            weight: weight("embed_tokens.weight"))
+            weight: weight("embed_tokens.weight")
+        )
 
         var decoderLayers = [Qwen3.DecoderLayer]()
         for layerId in 0..<config.numHiddenLayers {
@@ -86,17 +92,22 @@ extension Qwen3 {
 
             let inputLayerNorm = MLTensorUtils.rmsNorm(
                 weight: try weight("\(prefix).input_layernorm.weight"),
-                epsilon: config.rmsNormEps)
+                epsilon: config.rmsNormEps
+            )
 
             let qNorm = MLTensorUtils.rmsNorm(
                 weight: try weight("\(prefix).self_attn.q_norm.weight"),
-                epsilon: config.rmsNormEps)
+                epsilon: config.rmsNormEps
+            )
             let kNorm = MLTensorUtils.rmsNorm(
                 weight: try weight("\(prefix).self_attn.k_norm.weight"),
-                epsilon: config.rmsNormEps)
+                epsilon: config.rmsNormEps
+            )
 
             let rotaryEmbeddings = MLTensorUtils.roPE(
-                dims: config.headDim, base: Int(config.ropeTheta))
+                dims: config.headDim,
+                base: Int(config.ropeTheta)
+            )
 
             let attention = Qwen3.Attention(
                 qProj: try projection("\(prefix).self_attn.q_proj"),
@@ -108,33 +119,39 @@ extension Qwen3 {
                 rotaryEmbeddings: rotaryEmbeddings,
                 numHeads: config.numAttentionHeads,
                 numKeyValueHeads: config.numKeyValueHeads,
-                headDim: config.headDim)
+                headDim: config.headDim
+            )
 
             let postAttentionLayerNorm = MLTensorUtils.rmsNorm(
                 weight: try weight("\(prefix).post_attention_layernorm.weight"),
-                epsilon: config.rmsNormEps)
+                epsilon: config.rmsNormEps
+            )
 
             let mlp = Qwen3.MLP(
                 gate: MLTensorUtils.linear(weight: try weight("\(prefix).mlp.gate_proj.weight")),
                 up: MLTensorUtils.linear(weight: try weight("\(prefix).mlp.up_proj.weight")),
-                down: MLTensorUtils.linear(weight: try weight("\(prefix).mlp.down_proj.weight")))
+                down: MLTensorUtils.linear(weight: try weight("\(prefix).mlp.down_proj.weight"))
+            )
 
             let decoderLayer = Qwen3.DecoderLayer(
                 inputLayerNorm: inputLayerNorm,
                 attention: attention,
                 postAttentionLayerNorm: postAttentionLayerNorm,
-                mlp: mlp)
+                mlp: mlp
+            )
 
             decoderLayers.append(decoderLayer)
         }
 
         let norm = MLTensorUtils.rmsNorm(
             weight: try weight("norm.weight"),
-            epsilon: config.rmsNormEps)
+            epsilon: config.rmsNormEps
+        )
 
         return Qwen3.Model(
             embedTokens: embedTokens,
             layers: decoderLayers,
-            norm: norm)
+            norm: norm
+        )
     }
 }

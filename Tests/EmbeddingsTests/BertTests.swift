@@ -93,8 +93,10 @@ struct BertTests {
         #expect(
             allClose(
                 data1,
-                [0.0, 0.5527864, 2.8944273, 7.0249224, 0.0, 0.5527864, 2.8944273, 7.0249224])
-                == true)
+                [0.0, 0.5527864, 2.8944273, 7.0249224, 0.0, 0.5527864, 2.8944273, 7.0249224]
+            )
+                == true
+        )
 
         let output2 = Bert.Output(
             dense: MLTensorUtils.linear(
@@ -118,8 +120,10 @@ struct BertTests {
         #expect(
             allClose(
                 data2,
-                [0.0, 0.55278635, 2.8944273, 7.0249224, 0.0, 0.5527864, 2.8944273, 7.0249224])
-                == true)
+                [0.0, 0.55278635, 2.8944273, 7.0249224, 0.0, 0.5527864, 2.8944273, 7.0249224]
+            )
+                == true
+        )
     }
 }
 
@@ -146,6 +150,7 @@ final class BertEmbeddingTests: XCTestCase {
 
         XCTAssertEqual(result.shape, [1, 2, 4])
         XCTAssertTrue(
-            allClose(data, [0, 0.552787, 2.89443, 7.02492, 0, 0.552787, 2.89443, 7.02492]))
+            allClose(data, [0, 0.552787, 2.89443, 7.02492, 0, 0.552787, 2.89443, 7.02492])
+        )
     }
 }

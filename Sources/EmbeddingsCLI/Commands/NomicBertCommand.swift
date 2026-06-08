@@ -10,11 +10,18 @@ struct NomicBertCommand: AsyncParsableCommand {
     )
     @Option var modelId: String = "nomic-ai/nomic-embed-text-v1.5"
     @Option var text: String = "Text to encode"
-    @Option var maxLength: Int = 2048
+    @Option var maxLength: Int?
 
     func run() async throws {
         let modelBundle = try await NomicBert.loadModelBundle(from: modelId)
-        let encoded = try modelBundle.encode(text, maxLength: maxLength, postProcess: .meanPool)
+        var options = modelBundle.defaultEncodeOptions
+        if let maxLength {
+            options.maxLength = maxLength
+        }
+        if options.postProcess == nil {
+            options.postProcess = .meanPool(normalize: false)
+        }
+        let encoded = try modelBundle.encode(text, options: options)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

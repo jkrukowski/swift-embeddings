@@ -353,15 +353,18 @@ extension XLMRoberta {
         let embeddings: XLMRoberta.Embeddings
         let encoder: XLMRoberta.Encoder
         let pooler: XLMRoberta.Pooler?
+        let paddingTokenId: Int
 
         public init(
             embeddings: XLMRoberta.Embeddings,
             encoder: XLMRoberta.Encoder,
-            pooler: XLMRoberta.Pooler?
+            pooler: XLMRoberta.Pooler?,
+            paddingTokenId: Int
         ) {
             self.embeddings = embeddings
             self.encoder = encoder
             self.pooler = pooler
+            self.paddingTokenId = paddingTokenId
         }
 
         private func extendedAttentionMask(_ attentionMask: MLTensor) -> MLTensor {
@@ -422,45 +425,57 @@ extension XLMRoberta {
     public struct ModelBundle: Sendable {
         public let model: XLMRoberta.Model
         public let tokenizer: any TextTokenizer
+        public let defaultEncodeOptions: EncodeOptions
 
         public init(
             model: XLMRoberta.Model,
-            tokenizer: any TextTokenizer
+            tokenizer: any TextTokenizer,
+            defaultEncodeOptions: EncodeOptions = .xlmRoberta
         ) {
             self.model = model
             self.tokenizer = tokenizer
+            self.defaultEncodeOptions = defaultEncodeOptions
         }
 
         public func encode(
             _ text: String,
-            maxLength: Int = 512,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
-                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: options.maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds: inputIds)
-                return result.sequenceOutput[0..., 0, 0...]
+                return processResult(result.sequenceOutput, with: options.postProcess)
             }
         }
 
         public func batchEncode(
             _ texts: [String],
-            padTokenId: Int = 0,
-            maxLength: Int = 512,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+            let options = options ?? defaultEncodeOptions
+            let padTokenId = options.padTokenId ?? model.paddingTokenId
+            return try withMLTensorComputePolicy(options.computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                    texts,
+                    padTokenId: padTokenId,
+                    maxLength: options.maxLength
+                )
                 let inputIds = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.tokens)
+                    scalars: batchTokenizeResult.tokens
+                )
                 let attentionMask = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.attentionMask)
+                    scalars: batchTokenizeResult.attentionMask
+                )
                 let result = model(inputIds: inputIds, attentionMask: attentionMask)
-                return result.sequenceOutput[0..., 0, 0...]
+                return processResult(
+                    result.sequenceOutput,
+                    with: options.postProcess,
+                    attentionMask: attentionMask
+                )
             }
         }
     }

@@ -15,36 +15,63 @@ import Testing
     #expect(tokenizer.tokenize("", maxLength: 128, addSpecialTokens: false) == [])
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 128, addSpecialTokens: true)
-            == [49406, 320, 1125, 539, 320, 2368, 49407])
+            == [49406, 320, 1125, 539, 320, 2368, 49407]
+    )
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 128, addSpecialTokens: false)
-            == [320, 1125, 539, 320, 2368])
+            == [320, 1125, 539, 320, 2368]
+    )
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 5, addSpecialTokens: true)
-            == [49406, 320, 1125, 539, 49407])
+            == [49406, 320, 1125, 539, 49407]
+    )
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 5, addSpecialTokens: false)
-            == [320, 1125, 539, 320, 2368])
+            == [320, 1125, 539, 320, 2368]
+    )
     #expect(
         tokenizer.tokenize(
-            "a photo of a cat", maxLength: 128, padToLength: 10, addSpecialTokens: true)
-            == [49406, 320, 1125, 539, 320, 2368, 49407, 0, 0, 0])
+            "a photo of a cat",
+            maxLength: 128,
+            padToLength: 10,
+            addSpecialTokens: true
+        )
+            == [49406, 320, 1125, 539, 320, 2368, 49407, 0, 0, 0]
+    )
     #expect(
         tokenizer.tokenize(
-            "a photo of a cat", maxLength: 128, padToLength: 10, addSpecialTokens: false)
-            == [320, 1125, 539, 320, 2368, 0, 0, 0, 0, 0])
+            "a photo of a cat",
+            maxLength: 128,
+            padToLength: 10,
+            addSpecialTokens: false
+        )
+            == [320, 1125, 539, 320, 2368, 0, 0, 0, 0, 0]
+    )
     #expect(
         tokenizer.tokenize(
-            "a photo of a cat", maxLength: 5, padToLength: 10, addSpecialTokens: true)
-            == [49406, 320, 1125, 539, 49407])
+            "a photo of a cat",
+            maxLength: 5,
+            padToLength: 10,
+            addSpecialTokens: true
+        )
+            == [49406, 320, 1125, 539, 49407]
+    )
     #expect(
         tokenizer.tokenize(
-            "a photo of a cat", maxLength: 5, padToLength: 10, addSpecialTokens: false)
-            == [320, 1125, 539, 320, 2368])
+            "a photo of a cat",
+            maxLength: 5,
+            padToLength: 10,
+            addSpecialTokens: false
+        )
+            == [320, 1125, 539, 320, 2368]
+    )
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 128, addSpecialTokens: true)
             == tokenizer.tokenize(
-                "    a    photo  of  a cat    ", maxLength: 128, addSpecialTokens: true)
+                "    a    photo  of  a cat    ",
+                maxLength: 128,
+                addSpecialTokens: true
+            )
     )
     #expect(
         tokenizer.tokenize("a photo of a cat", maxLength: 128, addSpecialTokens: true)

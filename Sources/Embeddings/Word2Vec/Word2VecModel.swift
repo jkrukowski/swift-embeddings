@@ -56,7 +56,8 @@ extension Word2Vec {
 
             // +1 to account for the input word. NOTE: using `topK` function results in a hard crash
             let indices = similarities.argsort(descendingOrder: true)[
-                ..<min(topK + 1, similarities.shape[0])]
+                ..<min(topK + 1, similarities.shape[0])
+            ]
             let values = similarities.gathering(atIndices: indices, alongAxis: 0)
 
             async let topIndices = indices.shapedArray(of: Int32.self).scalars

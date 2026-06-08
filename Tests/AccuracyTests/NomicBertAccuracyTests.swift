@@ -21,14 +21,15 @@ struct NomicBertAccuracyTests {
             from: Utils.ModelId.nomicEmbedTextV15,
             downloadBase: Utils.modelPath
         )
-        let encoded = try modelBundle.encode(
-            prefixed(text),
-            postProcess: .meanPool,
-            computePolicy: .cpuOnly
-        )
+        var options = EncodeOptions.nomicBert
+        options.postProcess = .meanPool(normalize: false)
+        options.computePolicy = .cpuOnly
+        let encoded = try modelBundle.encode(prefixed(text), options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.nomicEmbedTextV15, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.nomicEmbedTextV15,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [prefixed(text)],
@@ -46,14 +47,15 @@ struct NomicBertAccuracyTests {
             downloadBase: Utils.modelPath
         )
         let prefixedTexts = Utils.batchTextsToTests.map(prefixed)
-        let encoded = try modelBundle.batchEncode(
-            prefixedTexts,
-            postProcess: .meanPool,
-            computePolicy: .cpuOnly
-        )
+        var options = EncodeOptions.nomicBert
+        options.postProcess = .meanPool(normalize: false)
+        options.computePolicy = .cpuOnly
+        let encoded = try modelBundle.batchEncode(prefixedTexts, options: options)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.nomicEmbedTextV15, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.nomicEmbedTextV15,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: prefixedTexts,

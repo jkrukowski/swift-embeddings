@@ -47,7 +47,14 @@ extension Roberta {
             config: config,
             loadConfig: loadConfig
         )
-        return Roberta.ModelBundle(model: model, tokenizer: TokenizerWrapper(tokenizer))
+        let defaultEncodeOptions = EncodeOptions.roberta.applying(
+            try loadSentenceTransformersDefaults(in: modelFolder)
+        )
+        return Roberta.ModelBundle(
+            model: model,
+            tokenizer: TokenizerWrapper(tokenizer),
+            defaultEncodeOptions: defaultEncodeOptions
+        )
     }
 }
 
@@ -63,33 +70,48 @@ extension Roberta {
         let wordEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.word_embeddings.weight")))
+                    "embeddings.word_embeddings.weight"
+                )
+            )
+        )
 
         let tokenTypeEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.token_type_embeddings.weight")))
+                    "embeddings.token_type_embeddings.weight"
+                )
+            )
+        )
 
         let positionEmbeddings = try MLTensorUtils.embedding(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.position_embeddings.weight")))
+                    "embeddings.position_embeddings.weight"
+                )
+            )
+        )
 
         let layerNorm = try MLTensorUtils.layerNorm(
             weight: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.LayerNorm.weight")),
+                    "embeddings.LayerNorm.weight"
+                )
+            ),
             bias: safetensors.mlTensor(
                 forKey: loadConfig.modelConfig.weightKeyTransform(
-                    "embeddings.LayerNorm.bias")),
-            epsilon: config.layerNormEps)
+                    "embeddings.LayerNorm.bias"
+                )
+            ),
+            epsilon: config.layerNormEps
+        )
 
         let embeddings = Roberta.Embeddings(
             wordEmbeddings: wordEmbeddings,
             positionEmbeddings: positionEmbeddings,
             tokenTypeEmbeddings: tokenTypeEmbeddings,
             layerNorm: layerNorm,
-            paddingIdx: Int32(config.padTokenId))
+            paddingIdx: Int32(config.padTokenId)
+        )
 
         var layers = [Roberta.Layer]()
         for layer in 0..<config.numHiddenLayers {
@@ -97,25 +119,39 @@ extension Roberta {
                 query: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.weight")),
+                            "encoder.layer.\(layer).attention.self.query.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.query.bias"))),
+                            "encoder.layer.\(layer).attention.self.query.bias"
+                        )
+                    )
+                ),
                 key: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.weight")),
+                            "encoder.layer.\(layer).attention.self.key.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.key.bias")
-                    )),
+                            "encoder.layer.\(layer).attention.self.key.bias"
+                        )
+                    )
+                ),
                 value: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.weight")),
+                            "encoder.layer.\(layer).attention.self.value.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.self.value.bias"))),
+                            "encoder.layer.\(layer).attention.self.value.bias"
+                        )
+                    )
+                ),
                 numAttentionHeads: config.numAttentionHeads,
                 attentionHeadSize: config.hiddenSize / config.numAttentionHeads,
                 allHeadSize: config.numAttentionHeads
@@ -125,18 +161,28 @@ extension Roberta {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.weight")),
+                            "encoder.layer.\(layer).attention.output.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.dense.bias"))),
+                            "encoder.layer.\(layer).attention.output.dense.bias"
+                        )
+                    )
+                ),
                 layerNorm: MLTensorUtils.layerNorm(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.weight")),
+                            "encoder.layer.\(layer).attention.output.LayerNorm.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).attention.output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps)
+                            "encoder.layer.\(layer).attention.output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
             )
             let attention = Roberta.Attention(
                 selfAttention: selfAttention,
@@ -146,29 +192,43 @@ extension Roberta {
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.weight")),
+                            "encoder.layer.\(layer).intermediate.dense.weight"
+                        )
+                    ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).intermediate.dense.bias")
-                    ))
+                            "encoder.layer.\(layer).intermediate.dense.bias"
+                        )
+                    )
+                )
             )
             let output = try Roberta.Output(
                 dense: MLTensorUtils.linear(
                     weight: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.weight")),
-                    bias: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.dense.bias"))),
-                layerNorm: MLTensorUtils.layerNorm(
-                    weight: safetensors.mlTensor(
-                        forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.weight")
+                            "encoder.layer.\(layer).output.dense.weight"
+                        )
                     ),
                     bias: safetensors.mlTensor(
                         forKey: loadConfig.modelConfig.weightKeyTransform(
-                            "encoder.layer.\(layer).output.LayerNorm.bias")),
-                    epsilon: config.layerNormEps))
+                            "encoder.layer.\(layer).output.dense.bias"
+                        )
+                    )
+                ),
+                layerNorm: MLTensorUtils.layerNorm(
+                    weight: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.weight"
+                        )
+                    ),
+                    bias: safetensors.mlTensor(
+                        forKey: loadConfig.modelConfig.weightKeyTransform(
+                            "encoder.layer.\(layer).output.LayerNorm.bias"
+                        )
+                    ),
+                    epsilon: config.layerNormEps
+                )
+            )
 
             let layer = Roberta.Layer(
                 attention: attention,
@@ -179,6 +239,8 @@ extension Roberta {
         }
         return Roberta.Model(
             embeddings: embeddings,
-            encoder: Roberta.Encoder(layers: layers))
+            encoder: Roberta.Encoder(layers: layers),
+            paddingTokenId: config.padTokenId
+        )
     }
 }

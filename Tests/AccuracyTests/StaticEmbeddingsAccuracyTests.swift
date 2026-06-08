@@ -21,7 +21,9 @@ struct StaticEmbeddingsAccuracyTests {
         let encoded = try modelBundle.encode(text, normalize: true, truncateDimension: 1023)
         let swiftData = await encoded.cast(to: Float.self).scalars(of: Float.self)
         let modelPath = modelPath(
-            modelId: Utils.ModelId.staticEmbeddings, cacheDirectory: Utils.modelPath)
+            modelId: Utils.ModelId.staticEmbeddings,
+            cacheDirectory: Utils.modelPath
+        )
         let pythonData = try await generateUsingTransformers(
             modelPath: modelPath,
             texts: [text],

@@ -61,7 +61,9 @@ extension NomicBert {
             activationFunction =
                 try container.decodeIfPresent(String.self, forKey: .activationFunction) ?? "swiglu"
             maxTrainedPositions = try container.decodeIfPresent(
-                Int.self, forKey: .maxTrainedPositions)
+                Int.self,
+                forKey: .maxTrainedPositions
+            )
             padTokenId = try container.decodeIfPresent(Int.self, forKey: .padTokenId)
             bosTokenId = try container.decodeIfPresent(Int.self, forKey: .bosTokenId)
             eosTokenId = try container.decodeIfPresent(Int.self, forKey: .eosTokenId)
@@ -353,50 +355,59 @@ extension NomicBert {
     public struct ModelBundle: Sendable {
         public let model: NomicBert.Model
         public let tokenizer: any TextTokenizer
+        public let defaultEncodeOptions: EncodeOptions
 
         public init(
             model: NomicBert.Model,
-            tokenizer: any TextTokenizer
+            tokenizer: any TextTokenizer,
+            defaultEncodeOptions: EncodeOptions = .nomicBert
         ) {
             self.model = model
             self.tokenizer = tokenizer
+            self.defaultEncodeOptions = defaultEncodeOptions
         }
 
         public func encode(
             _ text: String,
-            maxLength: Int = 2048,
-            postProcess: PostProcess? = nil,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
-                let tokens = try tokenizer.tokenizeText(text, maxLength: maxLength)
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
+                let tokens = try tokenizer.tokenizeText(text, maxLength: options.maxLength)
                 let inputIds = MLTensor(shape: [1, tokens.count], scalars: tokens)
                 let result = model(inputIds: inputIds)
-                return processResult(result, with: postProcess)
+                return processResult(result, with: options.postProcess)
             }
         }
 
         public func batchEncode(
             _ texts: [String],
-            padTokenId: Int = 0,
-            maxLength: Int = 2048,
-            postProcess: PostProcess? = nil,
-            computePolicy: MLComputePolicy = .cpuAndGPU
+            options: EncodeOptions? = nil
         ) throws -> MLTensor {
-            try withMLTensorComputePolicy(computePolicy) {
+            let options = options ?? defaultEncodeOptions
+            return try withMLTensorComputePolicy(options.computePolicy) {
                 let batchTokenizeResult = try tokenizer.tokenizeTextsPaddingToLongest(
-                    texts, padTokenId: padTokenId, maxLength: maxLength)
+                    texts,
+                    padTokenId: options.padTokenId ?? 0,
+                    maxLength: options.maxLength
+                )
                 let inputIds = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.tokens)
+                    scalars: batchTokenizeResult.tokens
+                )
                 let attentionMask = MLTensor(
                     shape: batchTokenizeResult.shape,
-                    scalars: batchTokenizeResult.attentionMask)
+                    scalars: batchTokenizeResult.attentionMask
+                )
                 let result = model(
                     inputIds: inputIds,
                     attentionMask: attentionMask
                 )
-                return processResult(result, with: postProcess, attentionMask: attentionMask)
+                return processResult(
+                    result,
+                    with: options.postProcess,
+                    attentionMask: attentionMask
+                )
             }
         }
     }

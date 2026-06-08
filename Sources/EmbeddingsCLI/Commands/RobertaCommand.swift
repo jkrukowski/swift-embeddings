@@ -10,14 +10,18 @@ struct RobertaCommand: AsyncParsableCommand {
     )
     @Option var modelId: String = "FacebookAI/roberta-base"
     @Option var text: String = "Text to encode"
-    @Option var maxLength: Int = 512
+    @Option var maxLength: Int?
 
     func run() async throws {
         let modelBundle = try await Roberta.loadModelBundle(
             from: modelId,
             loadConfig: .addWeightKeyPrefix("roberta.")
         )
-        let encoded = try modelBundle.encode(text, maxLength: maxLength)
+        var options = modelBundle.defaultEncodeOptions
+        if let maxLength {
+            options.maxLength = maxLength
+        }
+        let encoded = try modelBundle.encode(text, options: options)
         let result = await encoded.cast(to: Float.self).shapedArray(of: Float.self).scalars
         print(result)
     }

@@ -34,7 +34,8 @@ final class XLMRobetaTokenizer: Sendable {
         if let maxLength {
             if addSpecialTokens {
                 precondition(
-                    maxLength >= 2, "maxLength must be at least 2 to accommodate BOS and EOS tokens"
+                    maxLength >= 2,
+                    "maxLength must be at least 2 to accommodate BOS and EOS tokens"
                 )
                 // Truncate to maxLength - 2 to make space for bos and eos tokens
                 result.append(contentsOf: tokenIds.prefix(maxLength - 2))
@@ -53,11 +54,13 @@ final class XLMRobetaTokenizer: Sendable {
             if let maxLength {
                 if padToLength <= maxLength {
                     result.append(
-                        contentsOf: Array(repeating: 0, count: padToLength - result.count))
+                        contentsOf: Array(repeating: 0, count: padToLength - result.count)
+                    )
                 }
             } else {
                 result.append(
-                    contentsOf: Array(repeating: 0, count: padToLength - result.count))
+                    contentsOf: Array(repeating: 0, count: padToLength - result.count)
+                )
             }
         }
         return result

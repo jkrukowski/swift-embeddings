@@ -3,6 +3,12 @@ import Foundation
 import Hub
 import MLTensorUtils
 import Tokenizers
+import os
+
+let logger = Logger(
+    subsystem: "com.jkrukowski.swift-embeddings",
+    category: "Configuration"
+)
 
 extension AutoTokenizer {
     static func from(
@@ -55,48 +61,206 @@ func downloadModelFromHub(
     )
 }
 
-public enum PostProcess {
-    case meanPool
-    case meanPoolAndNormalize
-    case lastTokenPool
-    case lastTokenPoolAndNormalize
+public enum PostProcess: Sendable, Equatable {
+    case clsTokenPool(normalize: Bool)
+    case meanPool(normalize: Bool)
+    case lastTokenPool(normalize: Bool)
+
+    init?(representing poolingMode: String, normalize: Bool) {
+        switch poolingMode.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "cls": self = .clsTokenPool(normalize: normalize)
+        case "mean": self = .meanPool(normalize: normalize)
+        case "lasttoken": self = .lastTokenPool(normalize: normalize)
+        default: return nil
+        }
+    }
+
+    public func withNormalize(_ normalize: Bool) -> PostProcess {
+        switch self {
+        case .clsTokenPool: .clsTokenPool(normalize: normalize)
+        case .meanPool: .meanPool(normalize: normalize)
+        case .lastTokenPool: .lastTokenPool(normalize: normalize)
+        }
+    }
+}
+
+struct SentenceTransformersDefaults {
+    var postProcess: PostProcess?
+    var normalize: Bool?
+    var maxLength: Int?
+}
+
+private let transformerConfigFilenames = [
+    "sentence_bert_config.json",
+    "sentence_roberta_config.json",
+    "sentence_distilbert_config.json",
+    "sentence_camembert_config.json",
+    "sentence_albert_config.json",
+    "sentence_xlm-roberta_config.json",
+    "sentence_xlnet_config.json",
+]
+
+private struct ModuleLayout {
+    var poolingPath: String?
+    var hasPooling = false
+    var transformerPath: String?
+    var hasNormalize = false
+}
+
+func loadSentenceTransformersDefaults(in modelFolder: URL) throws -> SentenceTransformersDefaults? {
+    guard let layout = try parseModuleLayout(in: modelFolder) else {
+        return nil
+    }
+    let postProcess = try postProcess(for: layout, in: modelFolder)
+    let normalize = (postProcess == nil && layout.hasNormalize) ? true : nil
+    let transformerFolder =
+        if let transformerPath = layout.transformerPath, !transformerPath.isEmpty {
+            modelFolder.appendingPathComponent(transformerPath)
+        } else {
+            modelFolder
+        }
+    let maxLength =
+        try transformerMaxSeqLength(in: transformerFolder)
+        ?? tokenizerModelMaxLength(in: modelFolder)
+    return SentenceTransformersDefaults(
+        postProcess: postProcess,
+        normalize: normalize,
+        maxLength: maxLength
+    )
+}
+
+private func parseModuleLayout(in modelFolder: URL) throws -> ModuleLayout? {
+    let modulesUrl = modelFolder.appendingPathComponent("modules.json")
+    guard FileManager.default.fileExists(atPath: modulesUrl.path) else {
+        return nil
+    }
+    let modulesData = try Data(contentsOf: modulesUrl)
+    guard
+        let modules = try JSONSerialization.jsonObject(with: modulesData) as? [[String: Any]]
+    else {
+        throw EmbeddingsError.invalidFile
+    }
+
+    var layout = ModuleLayout()
+    for module in modules {
+        guard let type = module["type"] as? String else { continue }
+        if type.hasSuffix(".Pooling") {
+            layout.hasPooling = true
+            layout.poolingPath = module["path"] as? String
+        } else if type.hasSuffix(".Transformer") {
+            layout.transformerPath = module["path"] as? String
+        } else if type.hasSuffix(".Normalize") {
+            layout.hasNormalize = true
+        }
+    }
+
+    if layout.hasPooling && layout.poolingPath == nil {
+        throw EmbeddingsError.invalidFile
+    }
+    return layout
+}
+
+private func postProcess(for layout: ModuleLayout, in modelFolder: URL) throws -> PostProcess? {
+    guard let poolingPath = layout.poolingPath else { return nil }
+    let poolingUrl =
+        modelFolder
+        .appendingPathComponent(poolingPath)
+        .appendingPathComponent("config.json")
+    let pooling = try loadJSONConfig(at: poolingUrl)
+    let postProcess = poolingPostProcess(from: pooling, normalize: layout.hasNormalize)
+    if postProcess == nil {
+        logger.error(
+            """
+            Unsupported sentence-transformers pooling at \(poolingUrl.path, privacy: .public); \
+            keeping the bundle's default pooling. Embeddings may differ from the upstream model.
+            """
+        )
+    }
+    return postProcess
+}
+
+private func transformerMaxSeqLength(in transformerFolder: URL) throws -> Int? {
+    for filename in transformerConfigFilenames {
+        let configUrl = transformerFolder.appendingPathComponent(filename)
+        if FileManager.default.fileExists(atPath: configUrl.path) {
+            if let maxLength = try loadJSONConfig(at: configUrl)["max_seq_length"] as? Int,
+                maxLength > 0
+            {
+                return maxLength
+            }
+        }
+    }
+    return nil
+}
+
+private func tokenizerModelMaxLength(in modelFolder: URL) throws -> Int? {
+    let tokenizerConfigUrl = modelFolder.appendingPathComponent("tokenizer_config.json")
+    guard FileManager.default.fileExists(atPath: tokenizerConfigUrl.path),
+        let modelMaxLength = try loadJSONConfig(at: tokenizerConfigUrl)["model_max_length"]
+            as? NSNumber
+    else {
+        return nil
+    }
+    let maxReasonableSequenceLength: Double = 1_000_000
+    let value = modelMaxLength.doubleValue
+    guard value > 0, value < maxReasonableSequenceLength else {
+        return nil
+    }
+    return Int(value)
+}
+
+private func poolingPostProcess(
+    from pooling: [String: Any],
+    normalize: Bool
+) -> PostProcess? {
+    if let mode = pooling["pooling_mode"] as? String {
+        return PostProcess(representing: mode, normalize: normalize)
+    }
+
+    let booleanModes: [(key: String, postProcess: PostProcess?)] = [
+        ("pooling_mode_cls_token", .clsTokenPool(normalize: normalize)),
+        ("pooling_mode_mean_tokens", .meanPool(normalize: normalize)),
+        ("pooling_mode_lasttoken", .lastTokenPool(normalize: normalize)),
+        ("pooling_mode_max_tokens", nil),
+        ("pooling_mode_mean_sqrt_len_tokens", nil),
+        ("pooling_mode_weightedmean_tokens", nil),
+    ]
+    let enabled = booleanModes.filter { pooling[$0.key] as? Bool == true }
+    guard enabled.count == 1 else { return nil }
+    return enabled.first?.postProcess
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func processResult(
-    _ result: MLTensor, with postProcess: PostProcess?, attentionMask: MLTensor? = nil
+    _ result: MLTensor,
+    with postProcess: PostProcess?,
+    attentionMask: MLTensor? = nil
 ) -> MLTensor {
+    let pooled: MLTensor
+    let normalize: Bool
     switch postProcess {
     case .none:
         return result
-    case .meanPool:
-        let pooled: MLTensor =
+    case .clsTokenPool(let shouldNormalize):
+        pooled = result[0..., 0, 0...]
+        normalize = shouldNormalize
+    case .meanPool(let shouldNormalize):
+        pooled =
             if let attentionMask {
                 maskedMeanPool(result, attentionMask: attentionMask)
             } else {
                 result.mean(alongAxes: 1, keepRank: false)
             }
-        return pooled
-    case .meanPoolAndNormalize:
-        let pooled: MLTensor =
-            if let attentionMask {
-                maskedMeanPool(result, attentionMask: attentionMask)
-            } else {
-                result.mean(alongAxes: 1, keepRank: false)
-            }
-        return normalizeEmbeddings(pooled)
-    case .lastTokenPool:
-        return lastTokenPool(result, attentionMask: attentionMask)
-    case .lastTokenPoolAndNormalize:
-        return normalizeEmbeddings(lastTokenPool(result, attentionMask: attentionMask))
+        normalize = shouldNormalize
+    case .lastTokenPool(let shouldNormalize):
+        pooled = lastTokenPool(result, attentionMask: attentionMask)
+        normalize = shouldNormalize
     }
+    return normalize ? normalizeEmbeddings(pooled) : pooled
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func lastTokenPool(_ tensor: MLTensor, attentionMask: MLTensor? = nil) -> MLTensor {
-    // tensor shape: [batch, seq_len, hidden_dim]
-    // Selects the hidden state of the last non-padding token for each sequence.
-    // Assumes right padding, so the last non-padding index is `sum(attentionMask) - 1`.
     let seqLen = tensor.shape[1]
     let lastIndex: MLTensor =
         if let attentionMask {
@@ -108,16 +272,14 @@ func lastTokenPool(_ tensor: MLTensor, attentionMask: MLTensor? = nil) -> MLTens
         rangeFrom: 0.0,
         to: Float(seqLen),
         by: 1.0
-    ).expandingShape(at: 0)  // [1, seq_len]
-    let oneHot = (positions .== lastIndex).cast(to: Float.self)  // [batch, seq_len]
+    ).expandingShape(at: 0)
+    let oneHot = (positions .== lastIndex).cast(to: Float.self)
     let selected = tensor * oneHot.expandingShape(at: 2)
     return selected.sum(alongAxes: 1, keepRank: false)
 }
 
 @available(macOS 15.0, iOS 18.0, tvOS 18.0, visionOS 2.0, watchOS 11.0, *)
 func maskedMeanPool(_ tensor: MLTensor, attentionMask: MLTensor) -> MLTensor {
-    // tensor shape: [batch, seq_len, hidden_dim], attentionMask shape: [batch, seq_len]
-    // Expand attention mask to match tensor dimensions: [batch, seq_len, 1]
     let expandedMask = attentionMask.expandingShape(at: 2)
     let maskedTensor = tensor * expandedMask
     let sumPooled = maskedTensor.sum(alongAxes: 1, keepRank: false)

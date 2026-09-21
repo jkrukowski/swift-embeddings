@@ -34,6 +34,11 @@ let package = Package(
             url: "https://github.com/huggingface/swift-transformers.git",
             from: "1.3.3"
         ),
+        // Required for watchOS/tvOS compilation in swift-transformers' transitive dependency.
+        .package(
+            url: "https://github.com/huggingface/swift-huggingface.git",
+            from: "0.10.0"
+        ),
         .package(
             url: "https://github.com/jkrukowski/swift-safetensors.git",
             from: "0.0.7"
